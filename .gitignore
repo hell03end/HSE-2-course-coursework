@@ -1,4 +1,4 @@
-# Byte-compiled / optimized / DLL 
+### Byte-compiled / optimized / DLL 
 __pycache__/
 *.py[cod]
 *$py.class
@@ -15,7 +15,7 @@ __pycache__/
 ### Specific PATHs:
 .idea/
 bak/
-rsc/
+src/
 
 ### IPython Notebook
 .ipynb_checkpoints
