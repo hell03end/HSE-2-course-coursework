@@ -39,15 +39,11 @@ class ESOINN:
         # Initial 2 neurons
         # Инициализация веторов признаков(из области допустимых значений) для двух начальных нейронов
         # Думаю, надо первые два входных вектора использовать для них
-        for i in range(2):
-            x = random.random()
-            x = round(x,4)
-            neuron1.feature_vector.append(x)
-
-        for i in range(2):
-            x = random.random()
-            x = round(x,4)
-            neuron2.feature_vector.append(x)
+        for neuron in [neuron1, neuron2]:
+            for i in range(2):
+                x = random.random()
+                x = round(x, 4)
+                neuron.feature_vector.append(x)
 
         # Инициализация матрицы смежности (2 х 2)
         # (можно переделать в словарь)
