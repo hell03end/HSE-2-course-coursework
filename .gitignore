@@ -13,7 +13,7 @@ __pycache__/
 *.pdf
 
 ### Specific PATHs:
-local_develop/
+*backup*
 .idea/
 bak/
 src/
