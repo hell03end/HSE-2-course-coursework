@@ -10,13 +10,13 @@ __pycache__/
 *.log
 
 ### Media:
-*.pdf
+# *.pdf
 
 ### Specific PATHs:
-*backup*
+# *backup*
 .idea/
 bak/
-src/
+# src/
 local/
 
 ### IPython Notebook
