@@ -17,6 +17,7 @@ __pycache__/
 .idea/
 bak/
 src/
+local/
 
 ### IPython Notebook
 .ipynb_checkpoints
