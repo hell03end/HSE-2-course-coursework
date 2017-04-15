@@ -78,9 +78,9 @@ class EnhancedSelfOrganizingIncrementalNN:
         if not self.count_signals % self.learning_step:
             self.separate_subclasses()  # @TODO: algorithm 3.1
             self.remove_noise()  # @TODO: noize removal
-    
+
+    # @FIXME: inf coef and separate variables for each winner
     def find_winners(self, input_signal):
-        # @FIXME: inf coef and separate variables for each winner
         winner1 = float('inf')
         winner1_id = -1
         winner2 = float('inf')
@@ -385,9 +385,46 @@ class EnhancedSelfOrganizingIncrementalNN:
         win2class = self.nodes[winners[1]].subclass_id
         return win1class, chance1 + chance2*(win1class == win2class)
 
-    def update(self):
-        pass  # @TODO: update topology
-    
+    def update(self) -> set:
+        visited = set()
+        classes_apex_ids = set()
+        for node_id in self.nodes:
+            if node_id not in visited:
+                class_apex_id, class_visited_ids = \
+                    self.max_apex_in_class(node_id)
+                visited.add(class_visited_ids)
+                classes_apex_ids.add(class_apex_id)
+        for apex_id in classes_apex_ids:
+            self.mark_class(apex_id, self.nodes[apex_id].subclass_id)
+        return classes_apex_ids
+
+    def mark_class(self, start_node_id, class_id):
+        visited = {start_node_id}
+        queue = list(self.neighbors.get(start_node_id, set()) - visited)
+        for vertex in queue.copy():
+            self.nodes[vertex].subclass_id = class_id
+            visited.add(vertex)
+            queue.remove(vertex)
+            queue.extend([
+                node for node in self.neighbors[vertex] - visited
+                if node not in visited
+            ])
+
+    def max_apex_in_class(self, start_node_id: int):
+        max_apex_id = start_node_id
+        visited = {start_node_id}
+        queue = list(self.neighbors.get(start_node_id, set()) - visited)
+        for vertex in queue.copy():
+            if self.nodes[max_apex_id].density < self.nodes[vertex].density:
+                max_apex_id = vertex
+            visited.add(vertex)
+            queue.remove(vertex)
+            queue.extend([
+                node for node in self.neighbors[vertex] - visited
+                if node not in visited
+            ])
+        return max_apex_id, visited
+
     def current_state(self):
         return {
             'count_signals': self.count_signals,
