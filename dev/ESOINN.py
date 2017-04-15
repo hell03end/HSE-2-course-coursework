@@ -79,7 +79,7 @@ class EnhancedSelfOrganizingIncrementalNN:
             self.separate_subclasses()  # @TODO: algorithm 3.1
             self.remove_noise()  # @TODO: noize removal
 
-    # @FIXME: inf coef and separate variables for each winner
+    # @TODO: remove inf coeff and separate variables for each winner
     def find_winners(self, input_signal):
         winner1 = float('inf')
         winner1_id = -1
@@ -269,6 +269,7 @@ class EnhancedSelfOrganizingIncrementalNN:
         )
     
     def change_class_id(self, node_id: int, class_id: int):
+        self.nodes[node_id].subclass_id = class_id
         visited = {node_id}
         queue = list(self.neighbors.get(node_id, set()) - visited)
         for vertex in queue.copy():
@@ -284,37 +285,39 @@ class EnhancedSelfOrganizingIncrementalNN:
         nodes = [self.nodes[nodes_ids[0]], self.nodes[nodes_ids[1]]]
         subclass_ids = [nodes[0].subclass_id, nodes[1].subclass_id]
         if subclass_ids[0] == -1 and subclass_ids[1] == -1:
-            for node in nodes:
-                node.subclass_id = nodes_ids[0]
+            for node_id in nodes_ids:
+                # @TODO: use id of node with max density
+                self.change_class_id(node_id, nodes_ids[0])
         elif subclass_ids[0] != subclass_ids[1]:
             if subclass_ids[0] == -1:
                 self.change_class_id(nodes_ids[0], subclass_ids[1])
             else:
                 self.change_class_id(nodes_ids[1], subclass_ids[0])
 
-    # # @FIXME: is this essential? remove if not.
-    # def is_extremum(self, node_id: int) -> int:
-    #     neighbors = self.find_neighbors(node_id)
-    #     current_density = self.nodes[node_id].density
-    #     local_min = False
-    #     local_max = False
-    #     for neighbor_id in neighbors:
-    #         if local_min and local_max:
-    #             return 0
-    #         neighbor_density = self.nodes[neighbor_id].density
-    #         if current_density > neighbor_density:
-    #             local_max = True
-    #         elif current_density < neighbor_density:
-    #             local_min = True
-    #         else:
-    #             raise RuntimeError("Equal nodes' density!")
-    #     if local_min and not local_max:
-    #         return -1
-    #     elif local_max and not local_min:
-    #         return 1
+    # @FIXME: is this essential? remove if not.
+    def is_extremum(self, node_id: int) -> int:
+        neighbors = self.find_neighbors(node_id)
+        current_density = self.nodes[node_id].density
+        local_min = False
+        local_max = False
+        for neighbor_id in neighbors:
+            if local_min and local_max:
+                return 0
+            neighbor_density = self.nodes[neighbor_id].density
+            if current_density > neighbor_density:
+                local_max = True
+            elif current_density < neighbor_density:
+                local_min = True
+            else:
+                raise RuntimeError("Equal nodes' density!")
+        if local_min and not local_max:
+            return -1
+        elif local_max and not local_min:
+            return 1
         
     # @TODO: paste working algorithm here and adapt it for usage in class
     # @FIXME: improve search by removing multy vertex addition in queue
+    # @CHECKME: is it necessary?
     def find_neighbors_local_maxes(self, node_id: int):
         apexes = set()
         visited = {node_id}
@@ -345,8 +348,8 @@ class EnhancedSelfOrganizingIncrementalNN:
 
     # @TODO: if local max found, mark all !min as one class
     def mark_subclasses(self, node_id: int, prev_visited: set):
-        visited = {start_node_id}
-        queue = list(self.neighbors.get(start_node_id, set()) - visited)
+        visited = {node_id}
+        queue = list(self.neighbors.get(node_id, set()) - visited)
         for vertex in queue.copy():
             visited.add(vertex)
             queue.remove(vertex)
@@ -359,6 +362,7 @@ class EnhancedSelfOrganizingIncrementalNN:
     # @TODO: separate subclasses
     # algorithm 3.1
     def separate_subclasses(self):
+        visited = set()
         for node_id in self.nodes:
             if node_id not in visited:
                 node_is_extremum = self.is_extremum(node_id)
@@ -404,6 +408,7 @@ class EnhancedSelfOrganizingIncrementalNN:
         win2class = self.nodes[winners[1]].subclass_id
         return win1class, chance1 + chance2*(win1class == win2class)
 
+    # @CHECKME: for Dmitriy, Alexandr
     def update(self) -> set:
         visited = set()
         classes_apex_ids = set()
@@ -417,6 +422,7 @@ class EnhancedSelfOrganizingIncrementalNN:
             self.change_class_id(apex_id, self.nodes[apex_id].subclass_id)
         return classes_apex_ids
 
+    # @CHECKME: for Dmitriy, Alexandr
     def max_apex_in_class(self, start_node_id: int):
         max_apex_id = start_node_id
         visited = {start_node_id}
@@ -432,7 +438,7 @@ class EnhancedSelfOrganizingIncrementalNN:
             ])
         return max_apex_id, visited
 
-    def current_state(self):
+    def current_state(self) -> dict:
         return {
             'count_signals': self.count_signals,
             'C1': self.C1,
