@@ -1,6 +1,7 @@
 import numpy as np
 
 
+# @TODO: add setters and getters, hide local variables
 class ESOINNNode:
     def __init__(self, feature_vector=()):
         self.feature_vector = np.array(feature_vector, dtype=float)  
@@ -80,6 +81,7 @@ class EnhancedSelfOrganizingIncrementalNN:
             self.remove_noise()  # @TODO: noize removal
 
     # @TODO: remove inf coeff and separate variables for each winner
+    # @TODO: add Rc
     def find_winners(self, input_signal):
         winner1 = float('inf')
         winner1_id = -1
@@ -232,8 +234,7 @@ class EnhancedSelfOrganizingIncrementalNN:
                 signal=input_signal,
                 coeff=neighbors_rate
             )
-    
-    # @CHECKME: use remove_edges() - but no test done
+
     def remove_old_ages(self):
         for edge in self.edges.copy():
             if self.edges[edge] > self.max_age:
@@ -314,8 +315,7 @@ class EnhancedSelfOrganizingIncrementalNN:
             return -1
         elif local_max and not local_min:
             return 1
-        
-    # @TODO: paste working algorithm here and adapt it for usage in class
+
     # @FIXME: improve search by removing multy vertex addition in queue
     # @CHECKME: is it necessary?
     def find_neighbors_local_maxes(self, node_id: int):
@@ -359,7 +359,7 @@ class EnhancedSelfOrganizingIncrementalNN:
                     pass
             pass
         
-    # @TODO: separate subclasses
+    # @TODO: subclasses remove connections between subclasses
     # algorithm 3.1
     def separate_subclasses(self):
         visited = set()
@@ -409,6 +409,7 @@ class EnhancedSelfOrganizingIncrementalNN:
         return win1class, chance1 + chance2*(win1class == win2class)
 
     # @CHECKME: for Dmitriy, Alexandr
+    # algorithm 3.3
     def update(self) -> set:
         visited = set()
         classes_apex_ids = set()
