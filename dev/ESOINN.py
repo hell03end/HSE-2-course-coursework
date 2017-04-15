@@ -441,15 +441,18 @@ class EnhancedSelfOrganizingIncrementalNN:
     def current_state(self) -> dict:
         return {
             'count_signals': self.count_signals,
-            'C1': self.C1,
-            'C2': self.C2,
-            'lambda': self.learning_step,
-            'forget': self.forget,
-            'max_age': self.max_age,
-            'metrics': self.metrics,
-            'learning_rate_winner': self.rate,
-            'learning_rate_winner_neighbor': self.rate_neighbor,
             'nodes': self.nodes,  # think about it
             'neighbors': self.neighbors,
-            'edges': self.edges
+            'edges': self.edges,
+            'configuration': {
+                'C1': self.C1,
+                'C2': self.C2,
+                'lambda': self.learning_step,
+                'forget': self.forget,
+                'max_age': self.max_age,
+                'metrics': self.metrics,
+                'learning_rate_winner': self.rate,
+                'learning_rate_winner_neighbor': self.rate_neighbor,
+                'Rc': self.rc,
+            }
         }
