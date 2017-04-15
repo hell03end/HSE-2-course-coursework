@@ -359,25 +359,31 @@ class EnhancedSelfOrganizingIncrementalNN:
         for neighbor_id in neighbors:
             self.remove_edges((node_id, neighbor_id))
         del self.nodes[node_id]
-    
+
+    # @FIXME: order sensetive
     def remove_noise(self):
-
         for node_id in self.nodes.copy():
-            neighbors_count = len(self.neighbors[node_id])
-            mean_density = np.sum([self.nodes[node_id].density for node_id in self.nodes]) / len(self.nodes)
-
+            mean_density = np.sum([
+                self.nodes[node_id].density for node_id in self.nodes
+                ])/len(self.nodes)
+            neighbors_count = len(self.neighbors.get(node_id, ()))
+            node_density = self.nodes[node_id].density
             if neighbors_count == 0:
-                self.delete_node(node_id)
+                self.remove_node(node_id)
             elif neighbors_count == 1:
-                if self.nodes[node_id].density < self.C2*mean_density:
-                    self.delete_node(node_id)
+                if node_density < self.C2*mean_density:
+                    self.remove_node(node_id)
             elif neighbors_count == 2:
-                if self.nodes[node_id].density < self.C1*mean_density:
-                    self.delete_node(node_id)
-
+                if node_density < self.C1*mean_density:
+                    self.remove_node(node_id)
 
     def predict(self, input_signal):
-        pass  # @TODO: make predictions
+        winners, distances = self.find_winners(input_signal)
+        chance1 = distances[1]/(distances[0] + distances[1])
+        chance2 = distances[0]/(distances[0] + distances[1])
+        win1class = self.nodes[winners[0]].subclass_id
+        win2class = self.nodes[winners[1]].subclass_id
+        return win1class, chance1 + chance2*(win1class == win2class)
 
     def update(self):
         pass  # @TODO: update topology
