@@ -97,7 +97,8 @@ class EnhancedSelfOrganizingIncrementalNN:
                 winner2 = dist
                 winner2_id = node_id
         return [winner1_id, winner2_id], [winner1, winner2]
-    
+
+    # @TODO: add filter for all neighbors found
     def find_neighbors(self, start_node_id: int, depth=1) -> set():
         visited = {start_node_id}
         queue = list(self.neighbors.get(start_node_id, set()) - visited)
@@ -291,26 +292,26 @@ class EnhancedSelfOrganizingIncrementalNN:
             else:
                 self.change_class_id(nodes_ids[1], subclass_ids[0])
 
-    # @FIXME: is this essential? remove if not.
-    def is_extremum(self, node_id: int) -> int:
-        neighbors = self.find_neighbors(node_id)
-        current_density = self.nodes[node_id].density
-        local_min = False
-        local_max = False
-        for neighbor_id in neighbors:
-            if local_min and local_max:
-                return 0
-            neighbor_density = self.nodes[neighbor_id].density
-            if current_density > neighbor_density:
-                local_max = True
-            elif current_density < neighbor_density:
-                local_min = True
-            else:
-                raise RuntimeError("Equal nodes' density!")
-        if local_min and not local_max:
-            return -1
-        elif local_max and not local_min:
-            return 1
+    # # @FIXME: is this essential? remove if not.
+    # def is_extremum(self, node_id: int) -> int:
+    #     neighbors = self.find_neighbors(node_id)
+    #     current_density = self.nodes[node_id].density
+    #     local_min = False
+    #     local_max = False
+    #     for neighbor_id in neighbors:
+    #         if local_min and local_max:
+    #             return 0
+    #         neighbor_density = self.nodes[neighbor_id].density
+    #         if current_density > neighbor_density:
+    #             local_max = True
+    #         elif current_density < neighbor_density:
+    #             local_min = True
+    #         else:
+    #             raise RuntimeError("Equal nodes' density!")
+    #     if local_min and not local_max:
+    #         return -1
+    #     elif local_max and not local_min:
+    #         return 1
         
     # @TODO: paste working algorithm here and adapt it for usage in class
     # @FIXME: improve search by removing multy vertex addition in queue
@@ -394,6 +395,7 @@ class EnhancedSelfOrganizingIncrementalNN:
                 if node_density < self.C1*mean_density:
                     self.remove_node(node_id)
 
+    # @TODO: add Rc
     def predict(self, input_signal):
         winners, distances = self.find_winners(input_signal)
         chance1 = distances[1]/(distances[0] + distances[1])
