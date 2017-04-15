@@ -244,7 +244,7 @@ class EnhancedSelfOrganizingIncrementalNN:
             self.nodes[node_id].density for node_id in neighbors
         ])
     
-    def calc_alpha(self, node_id: int, apex_density):
+    def calc_alpha(self, node_id: int, apex_density) -> float:
         mean_density = self.calc_mean_density_in_subclass(node_id)
         if 2*mean_density >= apex_density:
             return 0
@@ -268,9 +268,16 @@ class EnhancedSelfOrganizingIncrementalNN:
         )
     
     def change_class_id(self, node_id: int, class_id: int):
-        neighbors = self.find_neighbors(node_id, depth=-1)
-        for neighbor_id in neighbors:
-            self.nodes[neighbor_id].subclass_id = class_id
+        visited = {node_id}
+        queue = list(self.neighbors.get(node_id, set()) - visited)
+        for vertex in queue.copy():
+            self.nodes[vertex].subclass_id = class_id
+            visited.add(vertex)
+            queue.remove(vertex)
+            queue.extend([
+                node for node in self.neighbors[vertex] - visited
+                if node not in visited
+            ])
     
     def combine_subclasses(self, nodes_ids):
         nodes = [self.nodes[nodes_ids[0]], self.nodes[nodes_ids[1]]]
@@ -395,20 +402,8 @@ class EnhancedSelfOrganizingIncrementalNN:
                 visited.add(class_visited_ids)
                 classes_apex_ids.add(class_apex_id)
         for apex_id in classes_apex_ids:
-            self.mark_class(apex_id, self.nodes[apex_id].subclass_id)
+            self.change_class_id(apex_id, self.nodes[apex_id].subclass_id)
         return classes_apex_ids
-
-    def mark_class(self, start_node_id, class_id):
-        visited = {start_node_id}
-        queue = list(self.neighbors.get(start_node_id, set()) - visited)
-        for vertex in queue.copy():
-            self.nodes[vertex].subclass_id = class_id
-            visited.add(vertex)
-            queue.remove(vertex)
-            queue.extend([
-                node for node in self.neighbors[vertex] - visited
-                if node not in visited
-            ])
 
     def max_apex_in_class(self, start_node_id: int):
         max_apex_id = start_node_id
