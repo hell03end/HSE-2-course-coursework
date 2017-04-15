@@ -98,7 +98,7 @@ class EnhancedSelfOrganizingIncrementalNN:
                 winner2_id = node_id
         return [winner1_id, winner2_id], [winner1, winner2]
     
-    def find_neighbors(self, start_node_id, depth=1) -> set():
+    def find_neighbors(self, start_node_id: int, depth=1) -> set():
         visited = {start_node_id}
         queue = list(self.neighbors.get(start_node_id, set()) - visited)
         while depth and queue:
@@ -112,7 +112,7 @@ class EnhancedSelfOrganizingIncrementalNN:
                 ])
         return visited - {start_node_id}    
     
-    def calc_threshold(self, node_id):
+    def calc_threshold(self, node_id: int):
         neighbors = self.neighbors.get(node_id, None)
         node_feature_vector = self.nodes[node_id].feature_vector
         if neighbors:
@@ -132,7 +132,7 @@ class EnhancedSelfOrganizingIncrementalNN:
         self.nodes[self.unique_id] = ESOINNNode(input_signal)
         self.unique_id += 1  # to provide unique ids for each neuron
     
-    def update_edges_age(self, node_id, step=1):
+    def update_edges_age(self, node_id: int, step=1):
         neighbors = self.find_neighbors(node_id, depth=self.rc)
         for neighbor_id in neighbors:
             pair_id = min(node_id, neighbor_id), max(node_id, neighbor_id)
@@ -199,7 +199,7 @@ class EnhancedSelfOrganizingIncrementalNN:
 #             if not self.neighbors[nodes_ids[node_index]]:
 #                 del self.neighbors[nodes_ids[node_index]]
                          
-    def update_node_points(self, node_id, neighbors):
+    def update_node_points(self, node_id: int, neighbors):
         if neighbors:
             node_feature_vector = self.nodes[node_id].feature_vector
             mean_dist2neighbors = 1/len(neighbors)*np.sum([
@@ -212,14 +212,14 @@ class EnhancedSelfOrganizingIncrementalNN:
         else:
             self.nodes[node_id].update_points(1)
 
-    def update_neuron_density(self, node_id, neighbors):
+    def update_neuron_density(self, node_id: int, neighbors):
         self.update_node_points(node_id, neighbors)
         if self.forget:
             self.nodes[node_id].update_density(self.count_signals)
         else:
             self.nodes[node_id].update_density()
 
-    def update_feature_vectors(self, node_id, input_signal, neighbors):
+    def update_feature_vectors(self, node_id: int, input_signal, neighbors):
         acc_signal = self.nodes[node_id].accumulate_signals
         self.nodes[node_id].update_feature_vector(
             signal=input_signal,
@@ -238,13 +238,13 @@ class EnhancedSelfOrganizingIncrementalNN:
             if self.edges[edge] > self.max_age:
                 self.remove_edges(edge)
     
-    def calc_mean_density_in_subclass(self, node_id):
+    def calc_mean_density_in_subclass(self, node_id: int):
         neighbors = self.find_neighbors(node_id, depth=-1)
         return 1/len(neighbors)*np.sum([
             self.nodes[node_id].density for node_id in neighbors
         ])
     
-    def calc_alpha(self, node_id, apex_density):
+    def calc_alpha(self, node_id: int, apex_density):
         mean_density = self.calc_mean_density_in_subclass(node_id)
         if 2*mean_density >= apex_density:
             return 0
@@ -267,7 +267,7 @@ class EnhancedSelfOrganizingIncrementalNN:
             )
         )
     
-    def change_class_id(self, node_id, class_id):
+    def change_class_id(self, node_id: int, class_id: int):
         neighbors = self.find_neighbors(node_id, depth=-1)
         for neighbor_id in neighbors:
             self.nodes[neighbor_id].subclass_id = class_id
@@ -285,7 +285,7 @@ class EnhancedSelfOrganizingIncrementalNN:
                 self.change_class_id(nodes_ids[1], subclass_ids[0])
 
     # @FIXME: is this essential? remove if not.
-    def is_extremum(self, node_id) -> int:
+    def is_extremum(self, node_id: int) -> int:
         neighbors = self.find_neighbors(node_id)
         current_density = self.nodes[node_id].density
         local_min = False
@@ -307,7 +307,7 @@ class EnhancedSelfOrganizingIncrementalNN:
         
     # @TODO: paste working algorithm here and adapt it for usage in class
     # @FIXME: improve search by removing multy vertex addition in queue
-    def find_neighbors_local_maxes(self, node_id):
+    def find_neighbors_local_maxes(self, node_id: int):
         apexes = set()
         visited = {node_id}
 
@@ -354,6 +354,12 @@ class EnhancedSelfOrganizingIncrementalNN:
             else:
                 pass
 
+    def remove_node(self, node_id: int):
+        neighbors = self.find_neighbors(node_id)
+        for neighbor_id in neighbors:
+            self.remove_edges((node_id, neighbor_id))
+        del self.nodes[node_id]
+    
     def remove_noise(self):
 
         for node_id in self.nodes.copy():
