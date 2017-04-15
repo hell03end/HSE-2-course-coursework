@@ -353,9 +353,22 @@ class EnhancedSelfOrganizingIncrementalNN:
                 # for neighbor_id
             else:
                 pass
-    
+
     def remove_noise(self):
-        pass  # @TODO
+
+        for node_id in self.nodes.copy():
+            neighbors_count = len(self.neighbors[node_id])
+            mean_density = np.sum([self.nodes[node_id].density for node_id in self.nodes]) / len(self.nodes)
+
+            if neighbors_count == 0:
+                self.delete_node(node_id)
+            elif neighbors_count == 1:
+                if self.nodes[node_id].density < self.C2*mean_density:
+                    self.delete_node(node_id)
+            elif neighbors_count == 2:
+                if self.nodes[node_id].density < self.C1*mean_density:
+                    self.delete_node(node_id)
+
 
     def predict(self, input_signal):
         pass  # @TODO: make predictions
