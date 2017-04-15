@@ -343,23 +343,33 @@ class EnhancedSelfOrganizingIncrementalNN:
         return apexes
 
     # @TODO: if local max found, mark all !min as one class
-    def mark_subclasses(self):
-        pass
-    
+    def mark_subclasses(self, node_id: int, prev_visited: set):
+        visited = {start_node_id}
+        queue = list(self.neighbors.get(start_node_id, set()) - visited)
+        for vertex in queue.copy():
+            visited.add(vertex)
+            queue.remove(vertex)
+            for node in self.neighbors[vertex] - visited:
+                if node not in visited:
+                    queue.append(node)
+                    pass
+            pass
+        
     # @TODO: separate subclasses
     # algorithm 3.1
-    def separate_subclasses(self, visited=set()):
-        for node_id in self.nodes():
-            node_is_extremum = self.is_extremum(node_id)
-            if not node_is_extremum:
-                pass
-            elif node_is_extremum == 1:
-                self.nodes[node_id].subclass_id = node_id
-                visited.add(node_id)
-                neighbors = self.find_neighbors(node_id)
-                # for neighbor_id
-            else:
-                pass
+    def separate_subclasses(self):
+        for node_id in self.nodes:
+            if node_id not in visited:
+                node_is_extremum = self.is_extremum(node_id)
+                if not node_is_extremum:
+                    pass
+                elif node_is_extremum == 1:
+                    self.nodes[node_id].subclass_id = node_id
+                    visited.add(node_id)
+                    neighbors = self.find_neighbors(node_id)
+                    # for neighbor_id
+                else:
+                    pass
 
     def remove_node(self, node_id: int):
         neighbors = self.find_neighbors(node_id)
