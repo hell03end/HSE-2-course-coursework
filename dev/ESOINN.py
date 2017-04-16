@@ -1,4 +1,5 @@
 import numpy as np
+from copy import deepcopy
 
 
 # @TODO: add setters and getters, hide local variables
@@ -49,12 +50,12 @@ class EnhancedSelfOrganizingIncrementalNN:
         # @TODO: use { node_id: { neighbor_id: age } } instead of self.neighbors, self.edges
         self.neighbors = {}  # key = id, value = set of neighbors' ids
         self.edges = {}  # key = tuple(2), where t[0] < t[1], value = age/None
-    
+
+    # @FIXME: check condition of adding new node (thresholds usage)
     def fit(self, input_signal):
         self.count_signals += 1
         
         winners_ids, distances = self.find_winners(input_signal)
-        # @TODO: do not use thesholds list, calc it inplace
         if distances[0] > self.calc_threshold(winners_ids[0]) \
                 or distances[1] > self.calc_threshold(winners_ids[1]):
             self.create_node(input_signal)
@@ -114,7 +115,7 @@ class EnhancedSelfOrganizingIncrementalNN:
                     if node not in visited
                 ])
         return visited - {start_node_id}    
-    
+
     def calc_threshold(self, node_id: int):
         neighbors = self.neighbors.get(node_id, None)
         node_feature_vector = self.nodes[node_id].feature_vector
@@ -439,21 +440,30 @@ class EnhancedSelfOrganizingIncrementalNN:
             ])
         return max_apex_id, visited
 
-    def current_state(self) -> dict:
+    def current_state(self, deep=True) -> dict:
+        nodes = self.nodes
+        neighbors = self.neighbors
+        edges = self.edges
+        if deep:
+            nodes = deepcopy(self.nodes)
+            neighbors = deepcopy(self.neighbors)
+            edges = deepcopy(self.edges)
         return {
             'count_signals': self.count_signals,
-            'nodes': self.nodes,  # think about it
-            'neighbors': self.neighbors,
-            'edges': self.edges,
+            'count_neurons': len(self.nodes),
+            'last_node_id': self.unique_id - 1,
+            'nodes': nodes,
+            'neighbors': neighbors,
+            'edges': edges,
             'configuration': {
                 'C1': self.C1,
                 'C2': self.C2,
+                'Rc': self.rc,
                 'lambda': self.learning_step,
                 'forget': self.forget,
                 'max_age': self.max_age,
                 'metrics': self.metrics,
                 'learning_rate_winner': self.rate,
                 'learning_rate_winner_neighbor': self.rate_neighbor,
-                'Rc': self.rc,
             }
         }
