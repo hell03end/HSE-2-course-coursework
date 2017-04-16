@@ -2,29 +2,63 @@ import numpy as np
 from copy import deepcopy
 
 
-# @TODO: add setters and getters, hide local variables
 class ESOINNNode:
-    def __init__(self, feature_vector=()):
-        self.feature_vector = np.array(feature_vector, dtype=float)  
-        self.accumulate_signals = 0
-        self.total_points = 0
-        self.density = 0
-        self.subclass_id = -1
-    
+    def __init__(self, feature_vector):
+        self.__weights = np.array(feature_vector, dtype=float)
+        self.__acc_signals = 0
+        self.__total_points = float(0)
+        self.__density = float(0)
+        self.__subclass_id = -1
+
+    def __repr__(self):
+        return f"{str(self.feature_vector):^30} | {self.subclass_id:10} | " \
+               f"{self.density:13.10} | {self.points:13.10} | " \
+               f"{self.accumulate_signals}"
+
+    @property
+    def subclass_id(self) -> int:
+        return self.__subclass_id
+
+    @subclass_id.setter
+    def subclass_id(self, value: int):
+        if value < -1 or not isinstance(value, int):
+            raise ValueError("Wrong subclass id!")
+        self.__subclass_id = value
+
+    @property
+    def density(self) -> float:
+        return self.__density
+
+    @property
+    def points(self) -> float:
+        return self.__total_points
+
+    @property
+    def accumulate_signals(self) -> int:
+        return self.__acc_signals
+
+    @property
+    def feature_vector(self) -> np.array:
+        return self.__weights
+
     def update_accumulate_signals(self, n=1):
-        self.accumulate_signals += n
+        if n < 1 or not isinstance(n, int):
+            raise ValueError("Wrong number to update accumulated signals!")
+        self.__acc_signals += n
     
-    def update_points(self, points):
-        self.total_points += points
+    def update_points(self, points: int):
+        if points < 0:
+            raise ValueError("Wrong value of points!")
+        self.__total_points += points
         
     def update_density(self, coeff=None):
         if coeff:
-            self.density = self.total_points/coeff
+            self.__density = self.__total_points/coeff
         else:
-            self.density = self.total_points/self.accumulate_signals
+            self.__density = self.__total_points/self.accumulate_signals
 
     def update_feature_vector(self, signal, coeff):
-        self.feature_vector += coeff*(signal - self.feature_vector)
+        self.__weights += coeff * (signal - self.__weights)
 
 
 class EnhancedSelfOrganizingIncrementalNN:
@@ -317,7 +351,7 @@ class EnhancedSelfOrganizingIncrementalNN:
         elif local_max and not local_min:
             return 1
 
-    # @FIXME: improve search by removing multy vertex addition in queue
+    # @FIXME: improve search by removing multi vertex addition in queue
     # @CHECKME: is it necessary?
     def find_neighbors_local_maxes(self, node_id: int):
         apexes = set()
@@ -383,7 +417,7 @@ class EnhancedSelfOrganizingIncrementalNN:
             self.remove_edges((node_id, neighbor_id))
         del self.nodes[node_id]
 
-    # @FIXME: order sensetive
+    # @FIXME: order sensitive
     def remove_noise(self):
         for node_id in self.nodes.copy():
             mean_density = np.sum([
