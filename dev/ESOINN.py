@@ -382,7 +382,7 @@ class EnhancedSelfOrganizingIncrementalNN:
         return apexes
 
     def mark_subclasses(self, node_id: int,
-                        overlap_nodes: dict,
+                        neighbor_min_dists: dict,
                         visited: set):
 
         visited.add(node_id)
@@ -398,21 +398,24 @@ class EnhancedSelfOrganizingIncrementalNN:
             vertex_density = self.nodes[vertex].density
             visited.add(vertex)
             for neighbor_id in self.neighbors[vertex].copy():
+                # Пытаемся найти нейрон-сосед, плотность которого меньше
                 if self.nodes[neighbor_id].density < vertex_density:
-                    # Если мы нашли нейрон с плотностью меньше, чем у родителя
-                    # То нужно понять стоит ли нам его маркировать, либо маркоровать будет кто-то ДРУГОЙ
-                    min_dist = self.calc_heavy_neighbor_min_dist(neighbor_id)
+                    # Если данного нейрона нет в словаре neighbor_min_dists, то высчитываем для него
+                    if neighbor_id not in neighbor_min_dists:
+                        min_dist = self.calc_heavy_neighbor_min_dist(neighbor_id)
+                        neighbor_min_dists.update({neighbor_id: min_dist})
                     vertex_weights = self.nodes[vertex].feature_vector
                     neighbor_weights = self.nodes[neighbor_id].feature_vector
-                    # Проверка на то, будет ли маркировать кто-то ДРУГОЙ
-                    if self.metrics(vertex_weights,
-                                    neighbor_weights) <= min_dist:
-                        # Если мы ранее не посещяли узел, то значит совсем что-то новое
+                    # Если мы нашли такой нейрон, плотность которого меньше
+                    # Нужно проверить имеет ли он право маркировать этот нейрон
+                    # (Имеет право маркировать только ближайший нерон-сосед)
+                    if self.metrics(vertex_weights, neighbor_weights) == \
+                            neighbor_min_dists[neighbor_id]:
+                        # Если мы ранее не посещяли нейрон, то значит совсем что-то новое
                         if neighbor_id not in visited:
                             queue.append(neighbor_id)
                     # Если маркировать будет кто-то другой, значит это overlap area
                     else:
-                        overlap_nodes.update({neighbor_id: min_dist})
                         remove_set.add(neighbor_id)
 
         # Удаление ребер
@@ -423,7 +426,7 @@ class EnhancedSelfOrganizingIncrementalNN:
                     if self.nodes[neighbor_id].subclass_id == apex_id:
                         self.remove_edges((remove_id, neighbor_id))
 
-        return overlap_nodes, visited
+        return neighbor_min_dists, visited
 
     def calc_heavy_neighbor_min_dist(self, node_id: int) -> float:
         min_dist = float('inf')
@@ -440,16 +443,16 @@ class EnhancedSelfOrganizingIncrementalNN:
     # algorithm 3.1
     def separate_subclasses(self):
         visited_in_mark = set()
-        # key - overlap node id,
-        # value - min_dist to neighbor id, which have more density
-        overlap_nodes = dict()
+        # key - node_id
+        # value - min dist to neighbor, which density is more
+        neighbor_min_dists = dict()
         for node_id in self.nodes:
             if node_id not in visited_in_mark:
                 apexes = self.find_neighbors_local_maxes(node_id)
                 for apex in apexes:
-                    overlap_nodes, visited_in_mark = \
+                    neighbor_min_dists, visited_in_mark = \
                         self.mark_subclasses(apex,
-                                             overlap_nodes,
+                                             neighbor_min_dists,
                                              visited_in_mark)
 
     def remove_node(self, node_id: int):
