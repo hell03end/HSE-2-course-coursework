@@ -51,14 +51,14 @@ class Graph:
         }
 
 
-def load_mock(path=r"src/suspended_undirected_graph_enhanced"):
+def load_mock(path=r"data/suspended_undirected_graph_enhanced"):
     if not os.path.exists(path):
         return
     with open(path, "rb") as loader:
         return pickle.load(loader)
 
 
-def save_mock(graph, path=r"src/suspended_undirected_graph_enhanced"):
+def save_mock(graph, path=r"data/suspended_undirected_graph_enhanced"):
     if not os.path.exists(path):
         return
     with open(path, "wb") as writer:
