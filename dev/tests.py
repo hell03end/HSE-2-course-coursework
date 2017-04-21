@@ -323,13 +323,14 @@ class CoreTest(BasicTest):
 
     # @TODO: undone
     def test_update_feature_vectors(self, n_times=0):
-        id1 = 19
-        neighbors = self._nn.find_neighbors(id1)
-        self._nn.update_feature_vectors(id1, [0, 0], neighbors)
+        id1 = 0
         run_time = None
         if n_times > 0:
+            neighbors = self._nn.find_neighbors(id1)
+            nodes = deepcopy(self._nn.nodes)
             run_time = timeit('self._nn.update_feature_vectors(id1, [0, 0], '
                               'neighbors)', number=n_times, globals=locals())
+            self._nn.nodes = nodes
         return True, run_time
 
     def test_remove_old_ages(self, n_times=0):
