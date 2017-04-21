@@ -334,7 +334,8 @@ class EnhancedSelfOrganizingIncrementalNN:
                 self.nodes[self.nodes[nodes_ids[1]].subclass_id].density
             )*self.nodes[self.nodes[nodes_ids[1]].subclass_id].density
         )
-    
+
+    # @============================UNTESTED==============================@#
     def change_class_id(self, node_id: int, class_id: int):
         self.nodes[node_id].subclass_id = class_id
         visited = {node_id}
