@@ -1,6 +1,6 @@
 from copy import deepcopy
 import numpy as np
-import pickle
+import dill
 import os
 
 
@@ -55,14 +55,14 @@ def load_mock(path=r"data/suspended_undirected_graph_enhanced"):
     if not os.path.exists(path):
         return
     with open(path, "rb") as loader:
-        return pickle.load(loader)
+        return dill.load(loader)
 
 
 def save_mock(graph, path=r"data/suspended_undirected_graph_enhanced"):
     if not os.path.exists(path):
         return
     with open(path, "wb") as writer:
-        pickle.dump(graph, writer)
+        dill.dump(graph, writer)
 
 
 def change_mock(graph):
@@ -100,3 +100,41 @@ def change_mock(graph):
     graph.nodes[32].feature_vector = np.array([6.25, 3.25])
     graph.nodes[33].feature_vector = np.array([6.5, 2.5])
     graph.nodes[34].feature_vector = np.array([6.75, 2])
+
+
+NEIGHBOR_LOCAL_MAXES = {
+    0: {0},
+    1: {1},
+    2: {2},
+    3: {3},
+    4: {4},
+    5: {5},
+    6: {6},
+    7: {7},
+    8: {8},
+    9: {9},
+    10: {2, 3, 4},
+    11: {0, 1, 4, 5},
+    12: {0, 1, 4, 5},
+    13: {0, 1, 4, 5},
+    14: {0, 4, 5},
+    15: {0, 1, 4, 5},
+    16: {0, 5},
+    17: {5},
+    18: {5},
+    19: {5},
+    20: {5},
+    21: {5},
+    22: {5, 6},
+    23: {6},
+    24: {6},
+    25: {0, 1, 4, 5, 6, 7, 8},
+    26: {0, 1, 5, 6, 7, 8},
+    27: {0, 1, 5, 7, 8},
+    28: {7, 8},
+    29: {7, 8, 1, 5},
+    30: {1, 5, 7, 8, 9},
+    31: {8, 9},
+    32: {8, 9, 1},
+    33: {1}
+}
