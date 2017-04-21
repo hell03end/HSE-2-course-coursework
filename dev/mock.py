@@ -1,5 +1,6 @@
 from copy import deepcopy
 import numpy as np
+import json
 import dill
 import os
 
@@ -100,6 +101,20 @@ def change_mock(graph):
     graph.nodes[32].feature_vector = np.array([6.25, 3.25])
     graph.nodes[33].feature_vector = np.array([6.5, 2.5])
     graph.nodes[34].feature_vector = np.array([6.75, 2])
+
+
+def load_input_signals(path=r"data/manual_input_signals.JSON"):
+    if not os.path.exists(path):
+        return
+    with open(path, "r") as loader:
+        return json.load(loader)
+
+
+def save_input_signals(signals: list, path=r"data/manual_input_signals.JSON"):
+    if not os.path.exists(path):
+        return
+    with open(path, "w") as writer:
+        dill.dump(signals, writer)
 
 
 NEIGHBOR_LOCAL_MAXES = {
