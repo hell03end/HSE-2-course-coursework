@@ -1,11 +1,14 @@
-import numpy as np
-import logging
 import matplotlib.pyplot as plt
+from timeit import timeit
+import numpy as np
 try:
-    from dev import ESOINN
+    from dev import ESOINN, mock
+    from dev.commons import enable_logging
 except ImportError as error:
     print(error.args)
     import ESOINN
+    import mock
+    from commons import enable_logging
 
 
 # @TODO: add generators for training data
@@ -23,24 +26,12 @@ class BasicTest:
     def __init__(self, nn: ESOINN.EnhancedSelfOrganizingIncrementalNN):
         self._nn = nn
         self._state = nn.current_state(deep=True)
-        self._logger = self.enable_logging()
+        self._logger = enable_logging(f"{__name__}.BasicTest")
 
-    def train(self, df) -> dict:
+    def train(self, df):
         self._logger.info("Start training")
-        for sample in df:
-            self._nn.fit(sample)
+        self._state = self._nn.fit(df, get_state=True)
         self._logger.info("Training complete")
-        self._state = self._nn.current_state(deep=False)
-        return self._nn.current_state(deep=True)
-
-    # @TODO: use logging to file
-    # @TODO: use names of classes or manual names instead of __name__
-    @staticmethod
-    def enable_logging():
-        # @TODO: pass filename, filemode
-        logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s"
-                                   " - %(message)s", level=logging.INFO)
-        return logging.getLogger(__name__)
 
 
 # @FIXME: separate plotting and logging methods
@@ -50,9 +41,9 @@ class CoreTest(BasicTest):
         if not self._state['nodes']:
             self._logger.warning("No nodes")
             return
+        nodes = self._state['nodes']
         if plot:
             x, y, mark = [], [], []
-            nodes = self._state['nodes']
             for node_id in nodes:
                 features = nodes[node_id].feature_vector
                 x.append(features[0])
@@ -111,7 +102,7 @@ class CoreTest(BasicTest):
                     node_features = nodes[node_id].feature_vector
                     x.append(node_features[0])
                     y.append(node_features[1])
-                plt.plot(x, y)
+                plt.plot(x, y, '#9f9fa3')
         if plot and show:
             plt.show()
         # log
@@ -139,6 +130,10 @@ class CoreTest(BasicTest):
 
 
 class TrainTest(BasicTest):
+    pass
+
+
+def load_mock_graph():
     pass
 
 

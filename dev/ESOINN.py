@@ -1,5 +1,10 @@
 import numpy as np
 from copy import deepcopy
+try:
+    from dev.commons import enable_logging
+except ImportError as error:
+    print(error.args)
+    from commons import enable_logging
 
 
 class ESOINNNode:
@@ -67,7 +72,8 @@ class EnhancedSelfOrganizingIncrementalNN:
                  metrics=lambda x, y: np.sqrt(
                      np.sum(np.square(np.array(x) - np.array(y)))
                  ), learning_rate_winner=lambda t: 1/t,
-                 learning_rate_winner_neighbor=lambda t: 1/(100*t)):
+                 learning_rate_winner_neighbor=lambda t: 1/(100*t),
+                 logging_level="info"):
         self.C1 = c1
         self.C2 = c2
         self.learning_step = learning_step
@@ -79,6 +85,7 @@ class EnhancedSelfOrganizingIncrementalNN:
         self.rc = radius_cut_off
         self.rate = learning_rate_winner
         self.rate_neighbor = learning_rate_winner_neighbor
+        self._logger = enable_logging(f"{__name__}.ESOINN", logging_level)
         
         self.nodes = {i: ESOINNNode(init_nodes[i]) for i in (0, 1)}
         # @TODO: use { node_id: { neighbor_id: age } } instead of self.neighbors, self.edges
@@ -86,12 +93,15 @@ class EnhancedSelfOrganizingIncrementalNN:
         self.edges = {}  # key = tuple(2), where t[0] < t[1], value = age/None
 
     # @FIXME: check condition of adding new node (thresholds usage)
-    def fit(self, input_signal):
+    # @TODO: add partial_fit instead
+    def partial_fit(self, input_signal):
         self.count_signals += 1
         
         winners_ids, distances = self.find_winners(input_signal)
         if distances[0] > self.calc_threshold(winners_ids[0]) \
-                or distances[1] > self.calc_threshold(winners_ids[1]):
+                and distances[0] > self.calc_threshold(winners_ids[1]) \
+                or distances[1] > self.calc_threshold(winners_ids[1]) \
+                and distances[1] > self.calc_threshold(winners_ids[0]):
             self.create_node(input_signal)
             return
         
@@ -114,6 +124,14 @@ class EnhancedSelfOrganizingIncrementalNN:
         if not self.count_signals % self.learning_step:
             self.separate_subclasses()  # @TODO: algorithm 3.1
             self.remove_noise()  # @TODO: noize removal
+
+    def fit(self, signals, get_state=False):
+        self._logger.debug("Start training")
+        for signal in signals:
+            self.partial_fit(signal)
+        self._logger.debug("Training complete")
+        if get_state:
+            return self.current_state(deep=True)
 
     # @TODO: remove inf coeff and separate variables for each winner
     # @TODO: add Rc
@@ -169,7 +187,13 @@ class EnhancedSelfOrganizingIncrementalNN:
     def create_node(self, input_signal):
         self.nodes[self.unique_id] = ESOINNNode(input_signal)
         self.unique_id += 1  # to provide unique ids for each neuron
-    
+
+    def remove_node(self, node_id: int):
+        neighbors = self.find_neighbors(node_id)
+        for neighbor_id in neighbors:
+            self.remove_edges((node_id, neighbor_id))
+        del self.nodes[node_id]
+
     def update_edges_age(self, node_id: int, step=1):
         neighbors = self.find_neighbors(node_id, depth=self.rc)
         for neighbor_id in neighbors:
@@ -330,27 +354,6 @@ class EnhancedSelfOrganizingIncrementalNN:
             else:
                 self.change_class_id(nodes_ids[1], subclass_ids[0])
 
-    # @FIXME: is this essential? remove if not.
-    def is_extremum(self, node_id: int) -> int:
-        neighbors = self.find_neighbors(node_id)
-        current_density = self.nodes[node_id].density
-        local_min = False
-        local_max = False
-        for neighbor_id in neighbors:
-            if local_min and local_max:
-                return 0
-            neighbor_density = self.nodes[neighbor_id].density
-            if current_density > neighbor_density:
-                local_max = True
-            elif current_density < neighbor_density:
-                local_min = True
-            else:
-                raise RuntimeError("Equal nodes' density!")
-        if local_min and not local_max:
-            return -1
-        elif local_max and not local_min:
-            return 1
-
     # @FIXME: improve search by removing multi vertex addition in queue
     # @CHECKME: is it necessary?
     def find_neighbors_local_maxes(self, node_id: int):
@@ -439,27 +442,21 @@ class EnhancedSelfOrganizingIncrementalNN:
 
         return min_dist
 
-    # @TODO: subclasses remove connections between subclasses
+    # @FIXME: don't calculate min dist for each node
     # algorithm 3.1
     def separate_subclasses(self):
-        visited_in_mark = set()
+        visited = set()
         # key - node_id
         # value - min dist to neighbor, which density is more
-        neighbor_min_dists = dict()
+        neighbor_min_dists = dict()  # key=node_id, value=
         for node_id in self.nodes:
-            if node_id not in visited_in_mark:
+            if node_id not in visited:
                 apexes = self.find_neighbors_local_maxes(node_id)
                 for apex in apexes:
-                    neighbor_min_dists, visited_in_mark = \
+                    neighbor_min_dists, visited = \
                         self.mark_subclasses(apex,
                                              neighbor_min_dists,
-                                             visited_in_mark)
-
-    def remove_node(self, node_id: int):
-        neighbors = self.find_neighbors(node_id)
-        for neighbor_id in neighbors:
-            self.remove_edges((node_id, neighbor_id))
-        del self.nodes[node_id]
+                                             visited)
 
     # @FIXME: order sensitive
     def remove_noise(self):
