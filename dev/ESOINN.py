@@ -7,6 +7,14 @@ except ImportError as error:
     from commons import enable_logging
 
 
+def euclidean_distance(x, y):
+    return np.sqrt(np.sum(np.square(np.array(x) - np.array(y))))
+
+
+def learning_rate_generator(k=1, n=1):
+    return lambda t: n/(k*t)
+
+
 class ESOINNNode:
     def __init__(self, feature_vector):
         self.__weights = np.array(feature_vector, dtype=float)
@@ -17,7 +25,7 @@ class ESOINNNode:
 
     def __repr__(self):
         return f"{str(self.feature_vector):^30} | {self.subclass_id:10} | " \
-               f"{self.density:13.10} | {self.points:13.10} | " \
+               f"{float(self.density):13.10} | {self.points:13.10} | " \
                f"{self.accumulate_signals}"
 
     @property
@@ -69,10 +77,9 @@ class ESOINNNode:
 class EnhancedSelfOrganizingIncrementalNN:
     def __init__(self, init_nodes, c1=0.001, c2=1, learning_step=200,
                  max_age=50, forget=False, radius_cut_off=1,
-                 metrics=lambda x, y: np.sqrt(
-                     np.sum(np.square(np.array(x) - np.array(y)))
-                 ), learning_rate_winner=lambda t: 1/t,
-                 learning_rate_winner_neighbor=lambda t: 1/(100*t),
+                 metrics=euclidean_distance,
+                 learning_rate_winner=learning_rate_generator(),
+                 learning_rate_winner_neighbor=learning_rate_generator(k=100),
                  logging_level="info"):
         self.C1 = c1
         self.C2 = c2
@@ -113,7 +120,7 @@ class EnhancedSelfOrganizingIncrementalNN:
         # @CHECKME: обновление количества побед нейрона - не знаю куда поставить, но точно до подсчета плотности
         self.nodes[winners_ids[0]].update_accumulate_signals()
         
-        self.update_neuron_density(winners_ids[0], winner_neighbors)
+        self.update_node_density(winners_ids[0], winner_neighbors)
         self.update_feature_vectors(
             node_id=winners_ids[0],
             input_signal=input_signal,
@@ -274,7 +281,7 @@ class EnhancedSelfOrganizingIncrementalNN:
         else:
             self.nodes[node_id].update_points(1)
 
-    def update_neuron_density(self, node_id: int, neighbors):
+    def update_node_density(self, node_id: int, neighbors):
         self.update_node_points(node_id, neighbors)
         if self.forget:
             self.nodes[node_id].update_density(self.count_signals)
@@ -320,12 +327,12 @@ class EnhancedSelfOrganizingIncrementalNN:
             min_winners_density > self.calc_alpha(
                 nodes_ids[0],
                 self.nodes[self.nodes[nodes_ids[0]].subclass_id].density
-            )
+            )*self.nodes[self.nodes[nodes_ids[0]].subclass_id].density
         ) or (
             min_winners_density > self.calc_alpha(
                 nodes_ids[1],
                 self.nodes[self.nodes[nodes_ids[1]].subclass_id].density
-            )
+            )*self.nodes[self.nodes[nodes_ids[1]].subclass_id].density
         )
     
     def change_class_id(self, node_id: int, class_id: int):
@@ -358,15 +365,8 @@ class EnhancedSelfOrganizingIncrementalNN:
     # @CHECKME: is it necessary?
     def find_neighbors_local_maxes(self, node_id: int):
         apexes = set()
-        visited = {node_id}
-
-        queue = []
-        node_density = self.nodes[node_id].density
-        for neighbor_id in self.neighbors.get(node_id, set()) - visited:
-            if self.nodes[neighbor_id].density > node_density:
-                queue.append(neighbor_id)
-            visited.add(neighbor_id)
-
+        visited = set()
+        queue = [node_id]
         for vertex in queue:
             is_local_max = True
             vertex_density = self.nodes[vertex].density
