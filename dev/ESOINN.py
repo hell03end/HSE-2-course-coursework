@@ -108,9 +108,7 @@ class EnhancedSelfOrganizingIncrementalNN:
         
         winners_ids, distances = self.find_winners(input_signal)
         if distances[0] > self.calc_threshold(winners_ids[0]) \
-                and distances[0] > self.calc_threshold(winners_ids[1]) \
-                or distances[1] > self.calc_threshold(winners_ids[1]) \
-                and distances[1] > self.calc_threshold(winners_ids[0]):
+                and distances[1] > self.calc_threshold(winners_ids[1]):
             self.create_node(input_signal)
             return
         
@@ -393,7 +391,6 @@ class EnhancedSelfOrganizingIncrementalNN:
             return {node_id}
         return apexes
 
-    # @============================UNTESTED==============================@#
     def mark_subclasses(self, node_id: int,
                         neighbor_min_dists: dict,
                         visited: set):
@@ -487,7 +484,7 @@ class EnhancedSelfOrganizingIncrementalNN:
                     self.remove_node(node_id)
 
     # @TODO: add Rc
-    def predict(self, input_signal):
+    def predict(self, input_signal) -> tuple:
         winners, distances = self.find_winners(input_signal)
         chance1 = distances[1]/(distances[0] + distances[1])
         chance2 = distances[0]/(distances[0] + distances[1])
@@ -495,36 +492,34 @@ class EnhancedSelfOrganizingIncrementalNN:
         win2class = self.nodes[winners[1]].subclass_id
         return win1class, chance1 + chance2*(win1class == win2class)
 
-    # @CHECKME: for Dmitriy, Alexandr
     # algorithm 3.3
     def update(self) -> set:
-        visited = set()
-        classes_apex_ids = set()
-        for node_id in self.nodes:
-            if node_id not in visited:
-                class_apex_id, class_visited_ids = \
-                    self.max_apex_in_class(node_id)
-                visited.add(class_visited_ids)
-                classes_apex_ids.add(class_apex_id)
-        for apex_id in classes_apex_ids:
-            self.change_class_id(apex_id, self.nodes[apex_id].subclass_id)
-        return classes_apex_ids
+        queue = set(self.nodes.keys())
+        apexes_ids = set()
+        while queue:
+            node_id = queue.pop()
+            apex_id, visited = self.find_class_apex(node_id)
+            queue -= visited
+            apexes_ids.add(apex_id)
+            for vertex in visited:
+                self.nodes[vertex].subclass_id = apex_id
+        return apexes_ids
 
-    # @CHECKME: for Dmitriy, Alexandr
-    def max_apex_in_class(self, start_node_id: int):
-        max_apex_id = start_node_id
+    def find_class_apex(self, start_node_id: int) -> tuple:
+        apex_id = start_node_id
         visited = {start_node_id}
         queue = list(self.neighbors.get(start_node_id, set()) - visited)
-        for vertex in queue.copy():
-            if self.nodes[max_apex_id].density < self.nodes[vertex].density:
-                max_apex_id = vertex
-            visited.add(vertex)
-            queue.remove(vertex)
-            queue.extend([
-                node for node in self.neighbors[vertex] - visited
-                if node not in visited
-            ])
-        return max_apex_id, visited
+        while queue:
+            for vertex in queue.copy():
+                if self.nodes[apex_id].density < self.nodes[vertex].density:
+                    apex_id = vertex
+                visited.add(vertex)
+                queue.remove(vertex)
+                queue.extend([
+                    node_id for node_id in self.neighbors[vertex] - visited
+                    if node_id not in visited
+                ])
+        return apex_id, visited
 
     def current_state(self, deep=True) -> dict:
         nodes = self.nodes
