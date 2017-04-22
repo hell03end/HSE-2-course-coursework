@@ -102,6 +102,7 @@ class EnhancedSelfOrganizingIncrementalNN:
 
     # @FIXME: check condition of adding new node (thresholds usage)
     # @TODO: add partial_fit instead
+    # @UNTESTED
     def partial_fit(self, input_signal: "feature vector") -> None:
         self.count_signals += 1
         
@@ -133,6 +134,7 @@ class EnhancedSelfOrganizingIncrementalNN:
             self.separate_subclasses()  # @TODO: algorithm 3.1
             self.remove_noise()  # @TODO: noize removal
 
+    # @UNTESTED
     def fit(self, signals: "list of feature vectors", get_state=False):
         self._logger.debug("Start training")
         for signal in signals:
@@ -211,6 +213,7 @@ class EnhancedSelfOrganizingIncrementalNN:
             self.edges[pair_id] += step
 
     # algorithm 3.2
+    # @UNTESTED
     def build_connection(self, nodes_ids: "list of 2 ids") -> None:
         winners_classes = tuple(self.nodes[nodes_ids[i]].subclass_id
                                 for i in (0, 1))
@@ -222,7 +225,8 @@ class EnhancedSelfOrganizingIncrementalNN:
             self.create_edges(nodes_ids)
         else:
             self.remove_edges(nodes_ids)
-                
+
+    # @FIXME: keys repeats in for cycle
     def create_edges(self, nodes_ids) -> None:
         for node_id in nodes_ids:
             if node_id not in self.neighbors:
@@ -342,7 +346,6 @@ class EnhancedSelfOrganizingIncrementalNN:
             )*self.nodes[self.nodes[nodes_ids[1]].subclass_id].density
         )
 
-    # @============================UNTESTED==============================@#
     def change_class_id(self, node_id: int, class_id: int) -> None:
         self.nodes[node_id].subclass_id = class_id
         visited = {node_id}
@@ -390,6 +393,7 @@ class EnhancedSelfOrganizingIncrementalNN:
             return {node_id}
         return apexes
 
+    # @============================UNTESTED==============================@#
     def mark_subclasses(self, node_id: int,
                         neighbor_min_dists: dict,
                         visited: set):
@@ -464,13 +468,14 @@ class EnhancedSelfOrganizingIncrementalNN:
                                              neighbor_min_dists,
                                              visited)
 
-    # @FIXME: order sensitive
-    def remove_noise(self):
+    def remove_noise(self) -> None:
+        mean_density = np.sum([
+                node.density for node in self.nodes.values()
+            ])/len(self.nodes)
+        # use copy of neighbors to solve problem with order sensitivity
+        neighbors_copy = deepcopy(self.neighbors)
         for node_id in self.nodes.copy():
-            mean_density = np.sum([
-                self.nodes[node_id].density for node_id in self.nodes
-                ])/len(self.nodes)
-            neighbors_count = len(self.neighbors.get(node_id, ()))
+            neighbors_count = len(neighbors_copy.get(node_id, ()))
             node_density = self.nodes[node_id].density
             if neighbors_count == 0:
                 self.remove_node(node_id)
