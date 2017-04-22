@@ -12,12 +12,6 @@ except ImportError as error:
     from .commons import enable_logging
 
 
-# @TODO: add generators for training data
-class TrainingSamples:
-    def __init__(self, random_state):
-        self.__seed = random_state
-
-
 # @TODO: separate plotting and logging methods
 class BasicTest:
     """
@@ -29,12 +23,12 @@ class BasicTest:
                  logging_level="debug"):
         self._nn = nn
         # self._state = nn.current_state(deep=False)
-        self._logger = enable_logging(f"{__name__}.BasicTest", logging_level)
+        self._logger = enable_logging(f"{self.__class__}", logging_level)
         if not isinstance(nn, ESOINN.EnhancedSelfOrganizingIncrementalNN):
             self._logger.warning(f"{type(nn)} passed instead of NN, "
                                  f"so tests won't work")
 
-    def display_nodes(self, plot=False, show=False, log=False):
+    def display_nodes(self, plot=False, show=False, log=False) -> None:
         state = self._nn.current_state(deep=False)
         if not state['nodes']:
             self._logger.warning("No nodes")
@@ -81,7 +75,7 @@ class BasicTest:
         print(f"|{'—'*(width_id+1)}|{'—'*30}|"
               f"{'—'*(width_class+1)}|{'—'*21}|\n")
 
-    def display_neighbors(self):
+    def display_neighbors(self) -> None:
         state = self._nn.current_state(deep=False)
         if not state['neighbors']:
             self._logger.warning("No neighbors")
@@ -94,7 +88,7 @@ class BasicTest:
             print(f" {node_id:<{width_id}}| {neighbors.get(node_id, None)}")
         print()
 
-    def display_edges(self, plot=False, show=False, log=False):
+    def display_edges(self, plot=False, show=False, log=False) -> None:
         state = self._nn.current_state(deep=False)
         if not state['edges']:
             self._logger.warning("No edges")
@@ -122,7 +116,7 @@ class BasicTest:
         print(f"|{'—'*20}|{'—'*5}|")
 
     def display_info(self, plot=False, separate_show=False, log=False,
-                     show=True):
+                     show=True) -> None:
         self.display_nodes(plot=plot, show=separate_show, log=log)
         if log:
             self.display_neighbors()
@@ -131,7 +125,7 @@ class BasicTest:
             self.plot()
 
     @staticmethod
-    def plot():
+    def plot() -> None:
         plt.show()
 
     def get_state(self) -> dict:
@@ -180,8 +174,7 @@ class CoreTest(BasicTest):
         # else:
         #     self._logger.info(f"TEST: {name}")
         if time and kwargs.get('n_times', None):
-            self._logger.debug(f"{name} for {kwargs['n_times']} iterations:\t"
-                               f"{time[0]:.5}")
+            self._logger.debug(f"{time[0]:.5}\tfor {kwargs['n_times']} {name}")
 
     # @TODO: use dists[] instead of dist0, dist1
     def test_find_winners(self, n_times=0):
@@ -193,7 +186,7 @@ class CoreTest(BasicTest):
         if n_times > 0:
             run_time = timeit('self._nn.find_winners(feature_vector)',
                               number=n_times, globals=locals())
-        return winners == [30, 31] and dist0 and dist1, run_time
+        return winners == (30, 31) and dist0 and dist1, run_time
 
     def test_find_neighbors(self, n_times=0):
         neighbors = self._nn.find_neighbors(20, depth=2)
@@ -382,6 +375,33 @@ class CoreTest(BasicTest):
                               number=n_times, globals=locals())
         return correct_marking, run_time
 
+    def test_combine_subclasses(self, n_times=0):
+        ids = (0, 34)
+        correct_marking = True
+
+        self._nn.nodes[ids[1]].subclass_id = -1
+        self._nn.combine_subclasses(ids)
+        for node in self._nn.nodes.values():
+            correct_marking &= node.subclass_id != -1
+
+        self._nn.nodes[ids[1]].subclass_id += 100
+        self._nn.combine_subclasses(ids)
+        fix_class_id = self._nn.nodes[ids[1]].subclass_id
+        for node in self._nn.nodes.values():
+            correct_marking &= node.subclass_id == fix_class_id
+
+        run_time = None
+        if n_times > 0:
+            run_time = timeit(
+                'self._nn.nodes[ids[1]].subclass_id += 1; '
+                'self._nn.combine_subclasses(ids)',
+                number=n_times, globals=locals()
+            )
+        # rest class id values
+        for node in self._nn.nodes.values():
+            node.subclass_id = 0
+        return correct_marking, run_time
+
     def run_unit_tests(self, n_times=0):
         self.report_error(self.test_find_winners, "find_winners()",
                           n_times=n_times)
@@ -410,11 +430,9 @@ class CoreTest(BasicTest):
                           "merge_subclass_condition()", n_times=n_times)
         self.report_error(self.test_change_class_id, "change_class_id()",
                           n_times=n_times)
+        self.report_error(self.test_combine_subclasses, "combine_subclasses()",
+                          n_times=n_times)
 
 
 class TrainTest(BasicTest):
-    pass
-
-
-if __name__ == "__main__":
     pass
