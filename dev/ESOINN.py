@@ -250,7 +250,7 @@ class EnhancedSelfOrganizingIncrementalNN:
         for node_id in nodes_ids:
             for remove_id in nodes_ids:
                 if remove_id != node_id \
-                        and remove_id in self.neighbors[node_id]:
+                        and remove_id in self.neighbors.get(node_id, {}):
                     self.neighbors[node_id] -= {remove_id}
                     nodes_pair = \
                         (min(node_id, remove_id), max(node_id, remove_id))
@@ -376,7 +376,7 @@ class EnhancedSelfOrganizingIncrementalNN:
         for vertex in queue:
             is_local_max = True
             vertex_density = self.nodes[vertex].density
-            for neighbor_id in self.neighbors[vertex]:
+            for neighbor_id in self.neighbors.get(vertex, {}):
                 if self.nodes[neighbor_id].density > vertex_density:
                     if neighbor_id not in visited:
                         queue.append(neighbor_id)
@@ -406,7 +406,7 @@ class EnhancedSelfOrganizingIncrementalNN:
             self.nodes[vertex].subclass_id = apex_id
             vertex_density = self.nodes[vertex].density
             visited.add(vertex)
-            for neighbor_id in self.neighbors[vertex].copy():
+            for neighbor_id in self.neighbors.get(vertex, {}).copy():
                 # Пытаемся найти нейрон-сосед, плотность которого меньше
                 if self.nodes[neighbor_id].density < vertex_density:
                     # Если данного нейрона нет в словаре neighbor_min_dists, то высчитываем для него
@@ -431,7 +431,7 @@ class EnhancedSelfOrganizingIncrementalNN:
         for remove_id in remove_set:
             # Проверка на то, что к данному узлу из вершины никто НЕ смог пробиться
             if self.nodes[remove_id].subclass_id != apex_id:
-                for neighbor_id in self.neighbors[remove_id].copy():
+                for neighbor_id in self.neighbors.get(remove_id, {}).copy():
                     if self.nodes[neighbor_id].subclass_id == apex_id:
                         self.remove_edges((remove_id, neighbor_id))
 
@@ -439,7 +439,7 @@ class EnhancedSelfOrganizingIncrementalNN:
 
     def calc_heavy_neighbor_min_dist(self, node_id: int) -> float:
         min_dist = float('inf')
-        for neighbor_id in self.neighbors[node_id]:
+        for neighbor_id in self.neighbors.get(node_id, {}):
             if self.nodes[neighbor_id].density > self.nodes[node_id].density:
                 dist = self.metrics(self.nodes[neighbor_id].feature_vector,
                                     self.nodes[node_id].feature_vector)
