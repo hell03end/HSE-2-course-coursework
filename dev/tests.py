@@ -402,6 +402,21 @@ class CoreTest(BasicTest):
             node.subclass_id = 0
         return correct_marking, run_time
 
+    def test_find_neighbors_local_maxes(self, n_times=0):
+        results = {}
+        for node_id in self._nn.nodes:
+            results[node_id] = self._nn.find_neighbors_local_maxes(node_id)
+            # print(f"{node_id:<6}: {results[node_id]}")
+
+        run_time = None
+        if n_times > 0:
+            run_time = timeit(
+                'for node_id in self._nn.nodes: '
+                'self._nn.find_neighbors_local_maxes(node_id)',
+                number=n_times, globals=locals()
+            )
+        return results == mock.NEIGHBOR_LOCAL_MAXES, run_time
+
     def run_unit_tests(self, n_times=0):
         self.report_error(self.test_find_winners, "find_winners()",
                           n_times=n_times)
@@ -432,6 +447,8 @@ class CoreTest(BasicTest):
                           n_times=n_times)
         self.report_error(self.test_combine_subclasses, "combine_subclasses()",
                           n_times=n_times)
+        self.report_error(self.test_find_neighbors_local_maxes,
+                          "find_neighbors_local_maxes()", n_times=n_times)
 
 
 class TrainTest(BasicTest):
