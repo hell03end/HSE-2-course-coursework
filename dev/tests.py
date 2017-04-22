@@ -9,7 +9,7 @@ except ImportError as error:
     print(error.args)
     import ESOINN
     import mock
-    from commons import enable_logging
+    from .commons import enable_logging
 
 
 # @TODO: add generators for training data
@@ -180,8 +180,8 @@ class CoreTest(BasicTest):
         # else:
         #     self._logger.info(f"TEST: {name}")
         if time and kwargs.get('n_times', None):
-            self._logger.info(f"{name} for {kwargs['n_times']} iterations:\t"
-                              f"{time}")
+            self._logger.debug(f"{name} for {kwargs['n_times']} iterations:\t"
+                               f"{time[0]:.5}")
 
     # @TODO: use dists[] instead of dist0, dist1
     def test_find_winners(self, n_times=0):
@@ -368,6 +368,20 @@ class CoreTest(BasicTest):
                               number=n_times, globals=locals())
         return True, run_time
 
+    def test_change_class_id(self, n_times=0):
+        id1, class_id = 0, 0
+        self._nn.change_class_id(id1, class_id)
+        correct_marking = True
+        for node_id in self._nn.nodes:  # node 34 has different class
+            if node_id == 34:
+                continue
+            correct_marking &= self._nn.nodes[node_id].subclass_id == class_id
+        run_time = None
+        if n_times > 0:
+            run_time = timeit('self._nn.change_class_id(id1, class_id)',
+                              number=n_times, globals=locals())
+        return correct_marking, run_time
+
     def run_unit_tests(self, n_times=0):
         self.report_error(self.test_find_winners, "find_winners()",
                           n_times=n_times)
@@ -394,6 +408,8 @@ class CoreTest(BasicTest):
         self.report_error(self.test_calc_alpha, "calc_alpha()")
         self.report_error(self.test_merge_subclass_condition,
                           "merge_subclass_condition()", n_times=n_times)
+        self.report_error(self.test_change_class_id, "change_class_id()",
+                          n_times=n_times)
 
 
 class TrainTest(BasicTest):
