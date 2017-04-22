@@ -142,11 +142,11 @@ class CoreTest(BasicTest):
                                          globals=locals(), number=n_times)))
         return result
 
-    def initialize_tests(self):
+    def initialize_tests(self) -> None:
         g = mock.load_mock()
         self.configure_nn(g.nodes, g.neighbors, g.edges)
 
-    def configure_nn(self, nodes=None, neighbors=None, edges=None):
+    def configure_nn(self, nodes=None, neighbors=None, edges=None) -> None:
         if nodes:
             self._nn.nodes.clear()  # for clean configuration
             for node_id in nodes:
@@ -167,7 +167,7 @@ class CoreTest(BasicTest):
             self._nn.neighbors = deepcopy(neighbors)
             self._nn.edges = deepcopy(edges)
 
-    def report_error(self, test, name, **kwargs):
+    def report_error(self, test, name, **kwargs) -> None:
         res, *time = test(**kwargs)
         if not res:
             self._logger.error(f"TEST: {name}")
@@ -177,7 +177,7 @@ class CoreTest(BasicTest):
             self._logger.debug(f"{time[0]:.5}\tfor {kwargs['n_times']} {name}")
 
     # @TODO: use dists[] instead of dist0, dist1
-    def test_find_winners(self, n_times=0):
+    def test_find_winners(self, n_times=0) -> tuple:
         feature_vector = [5.5, 3]
         winners, dists = self._nn.find_winners(feature_vector)
         dist0 = dists[0] == self._nn.metrics([5.75, 3.25], feature_vector)
@@ -188,7 +188,7 @@ class CoreTest(BasicTest):
                               number=n_times, globals=locals())
         return winners == (30, 31) and dist0 and dist1, run_time
 
-    def test_find_neighbors(self, n_times=0):
+    def test_find_neighbors(self, n_times=0) -> tuple:
         neighbors = self._nn.find_neighbors(20, depth=2)
         check = neighbors == {17, 18, 19, 21, 22, 23, 6}
         neighbors = self._nn.find_neighbors(20)
@@ -198,7 +198,7 @@ class CoreTest(BasicTest):
                               number=n_times, globals=locals())
         return check and neighbors == {18, 19, 21, 22}, run_time
 
-    def test_calc_threshold(self, n_times=0):
+    def test_calc_threshold(self, n_times=0) -> tuple:
         right_calc = True
         id0, id1 = 34, 19
         _, dist = self._nn.find_winners(self._nn.nodes[id0].feature_vector)
@@ -232,6 +232,10 @@ class CoreTest(BasicTest):
             and len(self._nn.nodes) == self._nn.unique_id
             and list(self._nn.nodes[last_id].feature_vector) == feature_vector
         ]
+
+    # @FIXME: undone all
+    def test_build_connection(self, n_times=0):
+        pass
 
     # @TODO: change literals to variables
     def test_create_edges(self):
@@ -268,7 +272,7 @@ class CoreTest(BasicTest):
             successfully_remove &= id1 not in self._nn.neighbors.get(i, set())
         return [successfully_remove]
 
-    def test_update_edges_age(self, n_times=0):
+    def test_update_edges_age(self, n_times=0) -> tuple:
         step = 2
         successfully_age_update = True
         self._nn.update_edges_age(19, step=step)
@@ -283,7 +287,7 @@ class CoreTest(BasicTest):
                               number=n_times, globals=locals())
         return successfully_age_update, run_time
 
-    def test_update_node_points(self, n_times=0):
+    def test_update_node_points(self, n_times=0) -> tuple:
         ids = (34, 19)
         right_points = True
         for rc in range(1, 3):
@@ -310,12 +314,12 @@ class CoreTest(BasicTest):
                               number=n_times, globals=locals())
         return right_points, run_time
 
-    # @TODO: undone
+    # @FIXME: undone all
     def test_update_node_density(self):
         return [True]
 
-    # @TODO: undone
-    def test_update_feature_vectors(self, n_times=0):
+    # @FIXME: undone method testing
+    def test_update_feature_vectors(self, n_times=0) -> tuple:
         id1 = 0
         run_time = None
         if n_times > 0:
@@ -326,7 +330,7 @@ class CoreTest(BasicTest):
             self._nn.nodes = nodes
         return True, run_time
 
-    def test_remove_old_ages(self, n_times=0):
+    def test_remove_old_ages(self, n_times=0) -> tuple:
         ids = (1, 34)
         successfully_remove = True
         self._nn.create_edges(ids)
@@ -342,26 +346,27 @@ class CoreTest(BasicTest):
                               number=n_times, globals=locals())
         return successfully_remove, run_time
 
-    # @TODO: undone
-    def test_calc_mean_density_in_subclass(self, n_times=0):
+    # @FIXME: undone method testing
+    def test_calc_mean_density_in_subclass(self, n_times=0) -> tuple:
         run_time = None
         if n_times > 0:
             run_time = timeit('self._nn.calc_mean_density_in_subclass(0)',
                               number=n_times, globals=locals())
         return True, run_time
 
-    # @TODO: undone
+    # @FIXME: undone all
     def test_calc_alpha(self):
         return [True]
 
-    def test_merge_subclass_condition(self, n_times=0):
+    # @FIXME: undone method testing
+    def test_merge_subclass_condition(self, n_times=0) -> tuple:
         run_time = None
         if n_times > 0:
             run_time = timeit('self._nn.merge_subclass_condition((0, 1))',
                               number=n_times, globals=locals())
         return True, run_time
 
-    def test_change_class_id(self, n_times=0):
+    def test_change_class_id(self, n_times=0) -> tuple:
         id1, class_id = 0, 0
         self._nn.change_class_id(id1, class_id)
         correct_marking = True
@@ -375,7 +380,7 @@ class CoreTest(BasicTest):
                               number=n_times, globals=locals())
         return correct_marking, run_time
 
-    def test_combine_subclasses(self, n_times=0):
+    def test_combine_subclasses(self, n_times=0) -> tuple:
         ids = (0, 34)
         correct_marking = True
 
@@ -402,7 +407,7 @@ class CoreTest(BasicTest):
             node.subclass_id = 0
         return correct_marking, run_time
 
-    def test_find_neighbors_local_maxes(self, n_times=0):
+    def test_find_neighbors_local_maxes(self, n_times=0) -> tuple:
         results = {}
         for node_id in self._nn.nodes:
             results[node_id] = self._nn.find_neighbors_local_maxes(node_id)
@@ -417,38 +422,118 @@ class CoreTest(BasicTest):
             )
         return results == mock.NEIGHBOR_LOCAL_MAXES, run_time
 
+    # @FIXME: undone all
+    def test_mark_subclasses(self, n_times=0):
+        pass
+
+    # @FIXME: undone all
+    def test_calc_heavy_neighbor_min_dist(self, n_times=0):
+        pass
+
+    # @FIXME: undone all
+    def test_separate_subclasses(self, n_times=0):
+        pass
+
+    def test_remove_noise(self, n_times=0) -> tuple:
+        mean_density = np.sum([
+            node.density for node in self._nn.nodes.values()
+        ])/len(self._nn.nodes)
+
+        self._nn.remove_noise()
+        successfully_remove = True
+        for node in self._nn.nodes.values():
+            successfully_remove &= node.density > mean_density
+
+        run_time = None
+        if n_times > 0:
+            run_time = timeit('self._nn.remove_noise()',
+                              number=n_times, globals=locals())
+        self.initialize_tests()  # reset nn state
+        return True, run_time
+
+    def test_predict(self, n_times=0) -> tuple:
+        signal, test = (6, 3.25), (self._nn.nodes[30].subclass_id, 1)
+        hat = self._nn.predict(signal)
+        run_time = None
+        if n_times > 0:
+            run_time = timeit('self._nn.predict(signal)',
+                              number=n_times, globals=locals())
+        return hat == test, run_time
+
+    def test_find_class_apex(self, n_times=0) -> tuple:
+        test, ignore_id = (0, {i for i in range(34)}), 34
+        correct_result = True
+        for node_id in self._nn.nodes:
+            if node_id == ignore_id:
+                correct_result &= \
+                    ignore_id == self._nn.find_class_apex(ignore_id)[0]
+                continue
+            correct_result &= test == self._nn.find_class_apex(node_id)
+        run_time = None
+        if n_times > 0:
+            run_time = timeit('self._nn.find_class_apex(33)',
+                              number=n_times, globals=locals())
+        return correct_result, run_time
+
+    def test_update(self, n_times=0) -> tuple:
+        apex_id, subclass_ids = self._nn.find_class_apex(0)
+        ignore_id = set(self._nn.nodes.keys()) - subclass_ids
+        correct_mark = True
+        self._nn.change_class_id(apex_id, -1)
+        apexes = self._nn.update()
+        for node_id in self._nn.nodes.keys() - ignore_id:
+            correct_mark &= self._nn.nodes[node_id].subclass_id == apex_id
+        run_time = None
+        if n_times > 0:
+            run_time = timeit('self._nn.update()',
+                              number=n_times, globals=locals())
+        return apexes == {apex_id}.union(ignore_id) and correct_mark, run_time
+
     def run_unit_tests(self, n_times=0):
-        self.report_error(self.test_find_winners, "find_winners()",
-                          n_times=n_times)
+        params = {
+            'n_times': n_times
+        }
+        self.report_error(self.test_find_winners, "find_winners()", **params)
         self.report_error(self.test_find_neighbors, "find_neighbors()",
-                          n_times=n_times)
+                          **params)
         self.report_error(self.test_calc_threshold, "calc_threshold()",
-                          n_times=n_times)
+                          **params)
         self.report_error(self.test_create_node, "create_node()")
         self.report_error(self.test_create_edges, "create_edges()")
         self.report_error(self.test_remove_edges, "remove_edges()")
         self.report_error(self.test_remove_node, "remove_node()")
         self.report_error(self.test_update_edges_age, "update_edges_age()",
-                          n_times=n_times)
+                          **params)
         self.report_error(self.test_update_node_points, "update_node_points()",
-                          n_times=n_times)
+                          **params)
         self.report_error(self.test_update_node_density,
                           "update_node_density()")
         self.report_error(self.test_update_feature_vectors,
-                          "update_feature_vectors()", n_times=n_times)
+                          "update_feature_vectors()", **params)
         self.report_error(self.test_remove_old_ages, "remove_old_ages()",
-                          n_times=n_times)
+                          **params)
         self.report_error(self.test_calc_mean_density_in_subclass,
-                          "calc_mean_density_in_subclass()", n_times=n_times)
+                          "calc_mean_density_in_subclass()", **params)
         self.report_error(self.test_calc_alpha, "calc_alpha()")
         self.report_error(self.test_merge_subclass_condition,
-                          "merge_subclass_condition()", n_times=n_times)
+                          "merge_subclass_condition()", **params)
         self.report_error(self.test_change_class_id, "change_class_id()",
-                          n_times=n_times)
+                          **params)
         self.report_error(self.test_combine_subclasses, "combine_subclasses()",
-                          n_times=n_times)
+                          **params)
         self.report_error(self.test_find_neighbors_local_maxes,
-                          "find_neighbors_local_maxes()", n_times=n_times)
+                          "find_neighbors_local_maxes()", **params)
+        # self.report_error(self.test_mark_subclasses, "mark_subclasses",
+        #                   **params)
+        # self.report_error(self.test_calc_mean_density_in_subclass,
+        #                   "calc_mean_density_in_subclass", **params)
+        # self.report_error(self.test_separate_subclasses, "separate_subclasses",
+        #                   **params)
+        self.report_error(self.test_remove_noise, "remove_noise", **params)
+        self.report_error(self.test_predict, "predict", **params)
+        self.report_error(self.test_find_class_apex, "find_class_apex",
+                          **params)
+        self.report_error(self.test_update, "update", **params)
 
 
 class TrainTest(BasicTest):
