@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
-from dev.ESOINN import EnhancedSelfOrganizingIncrementalNN
-from dev.tests import UnitTest
 from pprint import pprint
+from dev.tests import UnitTest
+from dev.ESOINN import EnhancedSelfOrganizingIncrementalNN
 
 
 def parse_argv():
