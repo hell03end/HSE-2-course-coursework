@@ -1,10 +1,10 @@
-import numpy as np
 from copy import deepcopy
+import numpy as np
 try:
     from dev.commons import enable_logging
 except ImportError as error:
     print(error.args)
-    from commons import enable_logging
+    from .commons import enable_logging
 
 
 def euclidean_distance(x, y) -> float:
@@ -108,7 +108,7 @@ class EnhancedSelfOrganizingIncrementalNN:
         
         winners_ids, distances = self.find_winners(input_signal)
         if distances[0] > self.calc_threshold(winners_ids[0]) \
-                and distances[1] > self.calc_threshold(winners_ids[1]):
+                or distances[1] > self.calc_threshold(winners_ids[1]):
             self.create_node(input_signal)
             return
         
@@ -370,6 +370,7 @@ class EnhancedSelfOrganizingIncrementalNN:
             else:
                 self.change_class_id(nodes_ids[1], subclass_ids[0])
 
+    # @CHECKME: is it necessary?
     def find_neighbors_local_maxes(self, node_id: int) -> set:
         apexes = set()
         visited = set()
@@ -389,6 +390,26 @@ class EnhancedSelfOrganizingIncrementalNN:
 
         if not apexes:
             return {node_id}
+        return apexes
+
+    def find_local_maxes(self) -> set:
+        apexes = set()
+        visited = set()
+        for node_id in set(self.nodes.keys()) - visited:
+            visited.add(node_id)
+            neighbors = self.neighbors.get(node_id, {})
+            if not neighbors:
+                apexes.add(node_id)
+                continue
+            is_apex = True
+            current_density = self.nodes[node_id].density
+            for neighbor_id in neighbors:
+                is_apex &= self.nodes[neighbor_id].density < current_density
+                if not is_apex:
+                    break
+            if is_apex:
+                apexes.add(node_id)
+                visited.union(neighbors)
         return apexes
 
     def mark_subclasses(self, node_id: int,
