@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from dev.ESOINN import EnhancedSelfOrganizingIncrementalNN
-from dev.tests import CoreTest
+from dev.tests import UnitTest
 from pprint import pprint
 
 
@@ -21,11 +21,10 @@ def parse_argv():
 if __name__ == "__main__":
     args = parse_argv()
     test_nn = EnhancedSelfOrganizingIncrementalNN([[1, 1], [1, 1]])
-    unit_test = CoreTest(test_nn)
-    unit_test.initialize_tests()
+    unit_test = UnitTest(test_nn)
     if args.plot == 1 or args.plot == 3:
         unit_test.display_info(plot=True)
-    unit_test.run_unit_tests(args.n_times)
+    unit_test.run_tests(args.n_times)
     if args.plot == 2 or args.plot == 3:
         unit_test.display_info(plot=True)
     unit_test.display_info(log=args.log)
