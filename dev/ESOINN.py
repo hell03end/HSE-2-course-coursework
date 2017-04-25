@@ -531,15 +531,14 @@ class EnhancedSelfOrganizingIncrementalNN:
         visited = {start_node_id}
         queue = list(self.neighbors.get(start_node_id, set()) - visited)
         while queue:
-            for vertex in queue.copy():
+            for vertex in queue:
                 if self.nodes[apex_id].density < self.nodes[vertex].density:
                     apex_id = vertex
                 visited.add(vertex)
                 queue.remove(vertex)
-                queue.extend([
-                    node_id for node_id in self.neighbors[vertex] - visited
-                    if node_id not in visited
-                ])
+                for node in self.neighbors[vertex] - visited:
+                    if node not in visited:
+                        queue.append(node)
         return apex_id, visited
 
     def current_state(self, deep=True) -> dict:
