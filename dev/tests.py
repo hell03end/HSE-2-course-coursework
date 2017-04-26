@@ -265,47 +265,168 @@ class UnitTest(Plotter):
         return apexes_found == maxes, \
             self.calc_run_time("self._nn.find_local_maxes()", n_times)
 
-    # def test_continue_mark(self, n_times=0) -> tuple:
-    #     id1, subclass_id = 1, 1
-    #     val_overlap_ids = {11, 12, 29, 30, 32}
-    #     val_visited = {1, 33}
-    #     overlap_ids, visited = self._nn.continue_mark([id1], subclass_id, set())
-    #     return val_overlap_ids == overlap_ids and val_visited == visited, \
-    #            self.calc_run_time(f"self._nn.continue_mark({[id1]},"
-    #                               f"{subclass_id},"
-    #                               f"{set()})",
-    #                               n_times)
-    #
-    # def test_get_nearest_neighbor(self, n_times=0) -> tuple:
-    #     id1 = 29
-    #     val_nearest_id = 7
-    #     nearest_id = self._nn.get_nearest_neighbor(id1, set())
-    #     return val_nearest_id == nearest_id, \
-    #            self.calc_run_time(f"self._nn.get_nearest_neighbor({id1}, "
-    #                               f"{set()})",
-    #                               n_times)
-    #
-    # def test_check_overlap(self, n_times=0) -> tuple:
-    #     Test_check = True
-    #     id1, id2 = 20, 9
-    #     val_continue = {20}
-    #     overlap_ids = {id1, id2}
-    #     visited = {18, 19, 30}
-    #     neighbors = self._nn.neighbors[id2]
-    #     continue_id = self._nn.check_overlap(overlap_ids, visited)
-    #
-    #     # For test with removing edges
-    #     for neighbor_id in neighbors:
-    #         if neighbor_id in visited:
-    #             Test_check &= id2 not in self._nn.neighbors[neighbor_id]
-    #
-    #     # For test without removing edges
-    #     Test_check &= continue_id == val_continue
-    #
-    #     return Test_check, \
-    #            self.calc_run_time(f"self._nn.check_overlap({overlap_ids}, "
-    #                               f"{visited})",
-    #                               n_times)
+    def test_continue_mark(self, n_times=0) -> tuple:
+        id1, subclass_id = 1, 1
+        val_overlap_ids = {11, 12, 29, 30, 32}
+        val_visited = {1, 33}
+        overlap_ids, visited = self._nn.continue_mark([id1], subclass_id, set())
+        return val_overlap_ids == overlap_ids and val_visited == visited, \
+               self.calc_run_time(f"self._nn.continue_mark({[id1]},"
+                                  f"{subclass_id},"
+                                  f"{set()})",
+                                  n_times)
+
+    def test_get_nearest_neighbor(self, n_times=0) -> tuple:
+        id1 = 29
+        val_nearest_id = 7
+        nearest_id = self._nn.get_nearest_neighbor(id1, set())
+        return val_nearest_id == nearest_id, \
+               self.calc_run_time(f"self._nn.get_nearest_neighbor({id1}, "
+                                  f"{set()})",
+                                  n_times)
+
+    def test_check_overlap(self, n_times=0) -> tuple:
+        Test_check = True
+        id1, id2 = 20, 9
+        val_continue = {20}
+        overlap_ids = {id1, id2}
+        visited = {18, 19, 30}
+        neighbors = self._nn.neighbors[id2]
+        continue_id = self._nn.check_overlap(overlap_ids, visited)
+
+        # For test with removing edges
+        for neighbor_id in neighbors:
+            if neighbor_id in visited:
+                Test_check &= id2 not in self._nn.neighbors[neighbor_id]
+
+        # For test without removing edges
+        Test_check &= continue_id == val_continue
+
+        return Test_check, \
+               self.calc_run_time(f"self._nn.check_overlap({overlap_ids}, "
+                                  f"{visited})",
+                                  n_times)
+
+    def test_separate_subclass(self, n_times=0) -> tuple:
+        neighbors = {0: {15, 16, 27},
+                     1: {12, 33},
+                     4: {10, 11},
+                     5: {14, 17},
+                     6: {23, 24, 25},
+                     7: {26, 28, 29},
+                     8: {30},
+                     9: {31},
+                     10: {4},
+                     11: {4},
+                     12: {1, 13},
+                     13: {12},
+                     14: {5},
+                     15: {0},
+                     16: {0},
+                     17: {5, 18},
+                     18: {17, 19, 20},
+                     19: {18, 20},
+                     20: {18, 19, 21, 22},
+                     21: {20, 22},
+                     22: {20, 21},
+                     23: {6, 24},
+                     24: {6, 23, 25},
+                     25: {6, 24},
+                     26: {7, 28, 29},
+                     27: {0},
+                     28: {7, 26},
+                     29: {7, 26},
+                     30: {8},
+                     31: {9},
+                     32: {33},
+                     33: {1, 32}}
+
+        edges = {(0, 15): 0,
+                 (0, 16): 0,
+                 (0, 27): 0,
+                 (1, 12): 0,
+                 (1, 33): 0,
+                 (4, 10): 0,
+                 (4, 11): 0,
+                 (5, 14): 0,
+                 (5, 17): 0,
+                 (6, 23): 0,
+                 (6, 24): 0,
+                 (6, 25): 0,
+                 (7, 26): 0,
+                 (7, 28): 0,
+                 (7, 29): 0,
+                 (8, 30): 0,
+                 (9, 31): 0,
+                 (12, 13): 0,
+                 (17, 18): 0,
+                 (18, 19): 0,
+                 (18, 20): 0,
+                 (19, 20): 0,
+                 (20, 21): 0,
+                 (20, 22): 0,
+                 (21, 22): 0,
+                 (23, 24): 0,
+                 (24, 25): 0,
+                 (26, 28): 0,
+                 (26, 29): 0,
+                 (32, 33): 0}
+
+        subclasses = {
+                    0: 0,
+                    1: 1,
+                    2: 2,
+                    3: 3,
+                    4: 4,
+                    5: 5,
+                    6: 6,
+                    7: 7,
+                    8: 8,
+                    9: 9,
+                    10: 4,
+                    11: 4,
+                    12: 1,
+                    13: 1,
+                    14: 5,
+                    15: 0,
+                    16: 0,
+                    17: 5,
+                    18: 5,
+                    19: 5,
+                    20: 5,
+                    21: 5,
+                    22: 5,
+                    23: 6,
+                    24: 6,
+                    25: 6,
+                    26: 7,
+                    27: 0,
+                    28: 7,
+                    29: 7,
+                    30: 8,
+                    31: 9,
+                    32: 1,
+                    33: 1,
+                    34: 34}
+
+        self._nn.separate_subclass()
+        Test_check = True
+
+        # Zeroing out all edges age (because some edges age = 2)
+        for edge in self._nn.edges:
+            self._nn.edges[edge] = 0
+
+        Test_check &= self._nn.neighbors == neighbors
+        Test_check &= self._nn.edges == edges
+
+        # Create subclass dict
+        test_subclasses = {} # key - id, value - subclass_id
+        for node_id in self._nn.nodes:
+            test_subclasses[node_id] = self._nn.nodes[node_id].subclass_id
+
+        Test_check &= test_subclasses == subclasses
+        return Test_check, self.calc_run_time("self._nn.separate_subclass()",
+                                              n_times)
 
     # @FIXME: undone all
     def test_mark_subclasses(self, n_times=0):
@@ -399,12 +520,14 @@ class UnitTest(Plotter):
                           "find_neighbors_local_maxes()", **params)
         self.report_error(self.test_find_local_maxes, "find_local_maxes()",
                           **params)
+        self.report_error(self.test_continue_mark, "continue_mark()", **params)
+        self.report_error(self.test_get_nearest_neighbor,
+                          "get_nearest_neighbor()",
+                          **params)
+        self.report_error(self.test_check_overlap, "check_overlap()", **params)
+        self.report_error(self.test_separate_subclass, "separate_subclass()",
+                          **params)
 
-        # self.report_error(self.test_continue_mark, "continue_mark()", **params)
-        # self.report_error(self.test_get_nearest_neighbor,
-        #                   "get_nearest_neighbor()",
-        #                   **params)
-        # self.report_error(self.test_check_overlap, "check_overlap()", **params)
         # self.report_error(self.test_mark_subclasses, "mark_subclasses",
         #                   **params)
         # self.report_error(self.test_calc_mean_density_in_subclass,
