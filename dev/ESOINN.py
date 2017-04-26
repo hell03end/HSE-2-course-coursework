@@ -348,14 +348,14 @@ class EnhancedSelfOrganizingIncrementalNN:
         self.nodes[node_id].subclass_id = class_id
         visited = {node_id}
         queue = list(self.neighbors.get(node_id, set()) - visited)
-        for vertex in queue.copy():
-            self.nodes[vertex].subclass_id = class_id
-            visited.add(vertex)
-            queue.remove(vertex)
-            queue.extend([
-                node for node in self.neighbors[vertex] - visited
-                if node not in visited
-            ])
+        while queue:
+            for vertex in queue:
+                self.nodes[vertex].subclass_id = class_id
+                visited.add(vertex)
+                queue.remove(vertex)
+                for node in self.neighbors[vertex] - visited:
+                    if node not in visited:
+                        queue.append(node)
     
     def combine_subclasses(self, nodes_ids: "list of 2 ids") -> None:
         nodes = [self.nodes[nodes_ids[0]], self.nodes[nodes_ids[1]]]
@@ -394,9 +394,7 @@ class EnhancedSelfOrganizingIncrementalNN:
 
     def find_local_maxes(self) -> set:
         apexes = set()
-        visited = set()
-        for node_id in set(self.nodes.keys()) - visited:
-            visited.add(node_id)
+        for node_id in self.nodes.keys():
             neighbors = self.neighbors.get(node_id, {})
             if not neighbors:
                 apexes.add(node_id)
@@ -409,82 +407,138 @@ class EnhancedSelfOrganizingIncrementalNN:
                     break
             if is_apex:
                 apexes.add(node_id)
-                visited.union(neighbors)
         return apexes
 
-    def mark_subclasses(self, node_id: int,
-                        neighbor_min_dists: dict,
-                        visited: set):
 
-        visited.add(node_id)
-        queue = [node_id]
-        # Set for keeping node_ids which need to remove edges
-        remove_set = set()
-        # Mark apex
-        self.nodes[node_id].subclass_id = node_id
-        apex_id = self.nodes[node_id].subclass_id
-
-        for vertex in queue:
-            self.nodes[vertex].subclass_id = apex_id
-            vertex_density = self.nodes[vertex].density
-            visited.add(vertex)
-            for neighbor_id in self.neighbors.get(vertex, {}).copy():
-                # Пытаемся найти нейрон-сосед, плотность которого меньше
-                if self.nodes[neighbor_id].density < vertex_density:
-                    # Если данного нейрона нет в словаре neighbor_min_dists, то высчитываем для него
-                    if neighbor_id not in neighbor_min_dists:
-                        min_dist = self.calc_heavy_neighbor_min_dist(neighbor_id)
-                        neighbor_min_dists.update({neighbor_id: min_dist})
-                    vertex_weights = self.nodes[vertex].feature_vector
-                    neighbor_weights = self.nodes[neighbor_id].feature_vector
-                    # Если мы нашли такой нейрон, плотность которого меньше
-                    # Нужно проверить имеет ли он право маркировать этот нейрон
-                    # (Имеет право маркировать только ближайший нерон-сосед)
-                    if self.metrics(vertex_weights, neighbor_weights) == \
-                            neighbor_min_dists[neighbor_id]:
-                        # Если мы ранее не посещяли нейрон, то значит совсем что-то новое
-                        if neighbor_id not in visited:
-                            queue.append(neighbor_id)
-                    # Если маркировать будет кто-то другой, значит это overlap area
-                    else:
-                        remove_set.add(neighbor_id)
-
-        # Удаление ребер
-        for remove_id in remove_set:
-            # Проверка на то, что к данному узлу из вершины никто НЕ смог пробиться
-            if self.nodes[remove_id].subclass_id != apex_id:
-                for neighbor_id in self.neighbors.get(remove_id, {}).copy():
-                    if self.nodes[neighbor_id].subclass_id == apex_id:
-                        self.remove_edges((remove_id, neighbor_id))
-
-        return neighbor_min_dists, visited
-
-    def calc_heavy_neighbor_min_dist(self, node_id: int) -> float:
-        min_dist = float('inf')
-        for neighbor_id in self.neighbors.get(node_id, {}):
-            if self.nodes[neighbor_id].density > self.nodes[node_id].density:
-                dist = self.metrics(self.nodes[neighbor_id].feature_vector,
-                                    self.nodes[node_id].feature_vector)
-                if min_dist > dist:
-                    min_dist = dist
-
-        return min_dist
+    # def continue_mark(self, node_ids:list, class_id:int, visited:set):
+    #     predicted_overlap_ids = set()
+    #     for node_id in node_ids:
+    #         queue = [node_id]
+    #         while queue:
+    #             for vertex in queue:
+    #                 for_extend = []
+    #                 vertex_density = self.nodes[vertex].density
+    #                 queue.remove(vertex)
+    #                 if vertex not in predicted_overlap_ids:
+    #                     is_overlap = False
+    #                     for neighbor_id in self.neighbors.get(vertex, None):
+    #                         neighbor_density = self.nodes[neighbor_id].density
+    #                         if  neighbor_density > vertex_density:
+    #                             if neighbor_id not in visited and \
+    #                             neighbor_id not in predicted_overlap_ids:
+    #                                 is_overlap = True
+    #                         else:
+    #                             for_extend.append(neighbor_id)
+    #
+    #                     if is_overlap:
+    #                         predicted_overlap_ids.add(vertex)
+    #                     else:
+    #                         visited.add(vertex)
+    #                         self.nodes[node_id].subclass_id = class_id
+    #                         queue.extend(for_extend)
+    #
+    #     return predicted_overlap_ids, visited
+    #
+    # def check_overlap(self, overlap_ids: set, visited: set) -> set:
+    #     continue_ids = set()
+    #     for node_id in overlap_ids:
+    #         near_id = self.get_nearest_neighbor(node_id, overlap_ids)
+    #         if near_id in visited:
+    #             continue_ids.add(node_id)
+    #         else:
+    #             for neighbor_id in self.neighbors.get(node_id, None).copy():
+    #                 if neighbor_id in visited:
+    #                     self.remove_edges((node_id, neighbor_id))
+    #     return continue_ids
+    #
+    # def get_nearest_neighbor(self, node_id: int, overlap_ids: set) -> int:
+    #     min_dist = float('inf')
+    #     near_id = -1
+    #     for neighbor_id in self.neighbors.get(node_id, {}):
+    #         if self.nodes[neighbor_id].density > self.nodes[node_id].density:
+    #             if neighbor_id not in overlap_ids:
+    #                 dist = self.metrics(self.nodes[neighbor_id].feature_vector,
+    #                                     self.nodes[node_id].feature_vector)
+    #                 if min_dist > dist:
+    #                     min_dist = dist
+    #                     near_id = neighbor_id
+    #     return near_id
+    #
+    # def separate_subclass(self):
+    #     apexes = self.find_local_maxes()
+    #     for apex in apexes:
+    #         queue = [apex]
+    #         visited = set()
+    #         while queue:
+    #             predicted_overlap_ids = self.continue_mark(queue,
+    #                                                        apex,
+    #                                                        visited)
+    #             queue = list(self.check_overlap(predicted_overlap_ids,
+    #                                             visited))
+    #
+    #
+    # def mark_subclasses(self, node_id: int,
+    #                     neighbor_min_dists: dict,
+    #                     visited: set):
+    #
+    #     visited.add(node_id)
+    #     queue = [node_id]
+    #     # Set for keeping node_ids which need to remove edges
+    #     remove_set = set()
+    #     # Mark apex
+    #     self.nodes[node_id].subclass_id = node_id
+    #     apex_id = self.nodes[node_id].subclass_id
+    #
+    #     for vertex in queue:
+    #         self.nodes[vertex].subclass_id = apex_id
+    #         vertex_density = self.nodes[vertex].density
+    #         visited.add(vertex)
+    #         for neighbor_id in self.neighbors.get(vertex, {}).copy():
+    #             # Пытаемся найти нейрон-сосед, плотность которого меньше
+    #             if self.nodes[neighbor_id].density < vertex_density:
+    #                 # Если данного нейрона нет в словаре neighbor_min_dists, то высчитываем для него
+    #                 if neighbor_id not in neighbor_min_dists:
+    #                     min_dist = self.calc_heavy_neighbor_min_dist(neighbor_id)
+    #                     neighbor_min_dists.update({neighbor_id: min_dist})
+    #                 vertex_weights = self.nodes[vertex].feature_vector
+    #                 neighbor_weights = self.nodes[neighbor_id].feature_vector
+    #                 # Если мы нашли такой нейрон, плотность которого меньше
+    #                 # Нужно проверить имеет ли он право маркировать этот нейрон
+    #                 # (Имеет право маркировать только ближайший нерон-сосед)
+    #                 if self.metrics(vertex_weights, neighbor_weights) == \
+    #                         neighbor_min_dists[neighbor_id]:
+    #                     # Если мы ранее не посещяли нейрон, то значит совсем что-то новое
+    #                     if neighbor_id not in visited:
+    #                         queue.append(neighbor_id)
+    #                 # Если маркировать будет кто-то другой, значит это overlap area
+    #                 else:
+    #                     remove_set.add(neighbor_id)
+    #
+    #     # Удаление ребер
+    #     for remove_id in remove_set:
+    #         # Проверка на то, что к данному узлу из вершины никто НЕ смог пробиться
+    #         if self.nodes[remove_id].subclass_id != apex_id:
+    #             for neighbor_id in self.neighbors.get(remove_id, {}).copy():
+    #                 if self.nodes[neighbor_id].subclass_id == apex_id:
+    #                     self.remove_edges((remove_id, neighbor_id))
+    #
+    #     return neighbor_min_dists, visited
 
     # @FIXME: don't calculate min dist for each node
     # algorithm 3.1
-    def separate_subclasses(self):
-        visited = set()
-        # key - node_id
-        # value - min dist to neighbor, which density is more
-        neighbor_min_dists = dict()  # key=node_id, value=
-        for node_id in self.nodes:
-            if node_id not in visited:
-                apexes = self.find_neighbors_local_maxes(node_id)
-                for apex in apexes:
-                    neighbor_min_dists, visited = \
-                        self.mark_subclasses(apex,
-                                             neighbor_min_dists,
-                                             visited)
+    # def separate_subclasses(self):
+    #     visited = set()
+    #     # key - node_id
+    #     # value - min dist to neighbor, which density is more
+    #     neighbor_min_dists = dict()  # key=node_id, value=
+    #     for node_id in self.nodes:
+    #         if node_id not in visited:
+    #             apexes = self.find_neighbors_local_maxes(node_id)
+    #             for apex in apexes:
+    #                 neighbor_min_dists, visited = \
+    #                     self.mark_subclasses(apex,
+    #                                          neighbor_min_dists,
+    #                                          visited)
 
     def remove_noise(self) -> None:
         mean_density = np.sum([
