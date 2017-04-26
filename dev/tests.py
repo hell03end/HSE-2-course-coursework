@@ -214,7 +214,7 @@ class UnitTest(Plotter):
             "self._nn.merge_subclass_condition((0, 1))", n_times)
 
     def test_change_class_id(self, n_times=0) -> tuple:
-        id1, class_id = 0, 0
+        id1, class_id = 0, 1
         self._nn.change_class_id(id1, class_id)
         correct_marking = True
         for node_id in self._nn.nodes:  # node 34 has different class
@@ -264,6 +264,48 @@ class UnitTest(Plotter):
         apexes_found = self._nn.find_local_maxes()
         return apexes_found == maxes, \
             self.calc_run_time("self._nn.find_local_maxes()", n_times)
+
+    # def test_continue_mark(self, n_times=0) -> tuple:
+    #     id1, subclass_id = 1, 1
+    #     val_overlap_ids = {11, 12, 29, 30, 32}
+    #     val_visited = {1, 33}
+    #     overlap_ids, visited = self._nn.continue_mark([id1], subclass_id, set())
+    #     return val_overlap_ids == overlap_ids and val_visited == visited, \
+    #            self.calc_run_time(f"self._nn.continue_mark({[id1]},"
+    #                               f"{subclass_id},"
+    #                               f"{set()})",
+    #                               n_times)
+    #
+    # def test_get_nearest_neighbor(self, n_times=0) -> tuple:
+    #     id1 = 29
+    #     val_nearest_id = 7
+    #     nearest_id = self._nn.get_nearest_neighbor(id1, set())
+    #     return val_nearest_id == nearest_id, \
+    #            self.calc_run_time(f"self._nn.get_nearest_neighbor({id1}, "
+    #                               f"{set()})",
+    #                               n_times)
+    #
+    # def test_check_overlap(self, n_times=0) -> tuple:
+    #     Test_check = True
+    #     id1, id2 = 20, 9
+    #     val_continue = {20}
+    #     overlap_ids = {id1, id2}
+    #     visited = {18, 19, 30}
+    #     neighbors = self._nn.neighbors[id2]
+    #     continue_id = self._nn.check_overlap(overlap_ids, visited)
+    #
+    #     # For test with removing edges
+    #     for neighbor_id in neighbors:
+    #         if neighbor_id in visited:
+    #             Test_check &= id2 not in self._nn.neighbors[neighbor_id]
+    #
+    #     # For test without removing edges
+    #     Test_check &= continue_id == val_continue
+    #
+    #     return Test_check, \
+    #            self.calc_run_time(f"self._nn.check_overlap({overlap_ids}, "
+    #                               f"{visited})",
+    #                               n_times)
 
     # @FIXME: undone all
     def test_mark_subclasses(self, n_times=0):
@@ -357,12 +399,20 @@ class UnitTest(Plotter):
                           "find_neighbors_local_maxes()", **params)
         self.report_error(self.test_find_local_maxes, "find_local_maxes()",
                           **params)
+
+        # self.report_error(self.test_continue_mark, "continue_mark()", **params)
+        # self.report_error(self.test_get_nearest_neighbor,
+        #                   "get_nearest_neighbor()",
+        #                   **params)
+        # self.report_error(self.test_check_overlap, "check_overlap()", **params)
         # self.report_error(self.test_mark_subclasses, "mark_subclasses",
         #                   **params)
         # self.report_error(self.test_calc_mean_density_in_subclass,
         #                   "calc_mean_density_in_subclass", **params)
         # self.report_error(self.test_separate_subclasses, "separate_subclasses",
         #                   **params)
+
+
         self.report_error(self.test_remove_noise, "remove_noise", **params)
         self.report_error(self.test_predict, "predict", **params)
         self.report_error(self.test_find_class_apex, "find_class_apex",
