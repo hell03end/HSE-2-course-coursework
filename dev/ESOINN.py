@@ -411,71 +411,77 @@ class EnhancedSelfOrganizingIncrementalNN:
         return apexes
 
 
-    def continue_mark(self, node_ids:list, class_id:int, visited:set):
-        predicted_overlap_ids = set()
-        for node_id in node_ids:
-            queue = [node_id]
-            while queue:
-                for vertex in queue:
-                    for_extend = []
-                    vertex_density = self.nodes[vertex].density
-                    queue.remove(vertex)
-                    if vertex not in predicted_overlap_ids:
-                        is_overlap = False
-                        for neighbor_id in self.neighbors.get(vertex, None):
-                            neighbor_density = self.nodes[neighbor_id].density
-                            if  neighbor_density > vertex_density:
-                                if neighbor_id not in visited and \
-                                neighbor_id not in predicted_overlap_ids:
-                                    is_overlap = True
-                            else:
-                                for_extend.append(neighbor_id)
-
-                        if is_overlap:
-                            predicted_overlap_ids.add(vertex)
-                        else:
-                            visited.add(vertex)
-                            self.nodes[node_id].subclass_id = class_id
-                            queue.extend(for_extend)
-
-        return predicted_overlap_ids, visited
-
-    def check_overlap(self, overlap_ids: set, visited: set) -> set:
-        continue_ids = set()
-        for node_id in overlap_ids:
-            near_id = self.get_nearest_neighbor(node_id, overlap_ids)
-            if near_id in visited:
-                continue_ids.add(node_id)
-            else:
-                for neighbor_id in self.neighbors.get(node_id, None).copy():
-                    if neighbor_id in visited:
-                        self.remove_edges((node_id, neighbor_id))
-        return continue_ids
-
-    def get_nearest_neighbor(self, node_id: int, overlap_ids: set) -> int:
-        min_dist = float('inf')
-        near_id = -1
-        for neighbor_id in self.neighbors.get(node_id, {}):
-            if self.nodes[neighbor_id].density > self.nodes[node_id].density:
-                if neighbor_id not in overlap_ids:
-                    dist = self.metrics(self.nodes[neighbor_id].feature_vector,
-                                        self.nodes[node_id].feature_vector)
-                    if min_dist > dist:
-                        min_dist = dist
-                        near_id = neighbor_id
-        return near_id
-
-    def separate_subclass(self):
-        apexes = self.find_local_maxes()
-        for apex in apexes:
-            queue = [apex]
-            visited = set()
-            while queue:
-                predicted_overlap_ids = self.continue_mark(queue,
-                                                           apex,
-                                                           visited)
-                queue = list(self.check_overlap(predicted_overlap_ids,
-                                                visited))
+    # def continue_mark(self, node_ids:list, class_id:int, visited:set):
+    #     predicted_overlap_ids = set()
+    #     for node_id in node_ids:
+    #         queue = [node_id]
+    #         while queue:
+    #             for vertex in queue:
+    #                 for_extend = []
+    #                 vertex_density = self.nodes[vertex].density
+    #                 queue.remove(vertex)
+    #                 if vertex not in predicted_overlap_ids:
+    #                     is_overlap = False
+    #                     for neighbor_id in self.neighbors.get(vertex, None):
+    #                         neighbor_density = self.nodes[neighbor_id].density
+    #                         if  neighbor_density > vertex_density:
+    #                             if neighbor_id not in visited and \
+    #                             neighbor_id not in predicted_overlap_ids:
+    #                                 is_overlap = True
+    #                         else:
+    #                             for_extend.append(neighbor_id)
+    #
+    #                     if is_overlap:
+    #                         predicted_overlap_ids.add(vertex)
+    #                     else:
+    #                         visited.add(vertex)
+    #                         self.nodes[node_id].subclass_id = class_id
+    #                         queue.extend(for_extend)
+    #
+    #     return predicted_overlap_ids, visited
+    #
+    # def check_overlap(self, overlap_ids: set, visited: set) -> set:
+    #     continue_ids = set()
+    #     for node_id in overlap_ids:
+    #         near_id = self.get_nearest_neighbor(node_id, overlap_ids)
+    #         if near_id in visited:
+    #             continue_ids.add(node_id)
+    #             for neighbor_id in self.neighbors.get(node_id, {}).copy():
+    #                 if self.nodes[neighbor_id].density > self.nodes[node_id].density:
+    #                     if neighbor_id not in visited:
+    #                         if neighbor_id not in overlap_ids:
+    #                             self.remove_edges((neighbor_id, node_id))
+    #         else:
+    #             for neighbor_id in self.neighbors.get(node_id, None).copy():
+    #                 if neighbor_id in visited:
+    #                     self.remove_edges((node_id, neighbor_id))
+    #     return continue_ids
+    #
+    # def get_nearest_neighbor(self, node_id: int, overlap_ids: set) -> int:
+    #     min_dist = float('inf')
+    #     near_id = -1
+    #     for neighbor_id in self.neighbors.get(node_id, {}):
+    #         if self.nodes[neighbor_id].density > self.nodes[node_id].density:
+    #             if neighbor_id not in overlap_ids:
+    #                 dist = self.metrics(self.nodes[neighbor_id].feature_vector,
+    #                                     self.nodes[node_id].feature_vector)
+    #                 if min_dist > dist:
+    #                     min_dist = dist
+    #                     near_id = neighbor_id
+    #     return near_id
+    #
+    # def separate_subclass(self):
+    #     apexes = self.find_local_maxes()
+    #     for apex in apexes:
+    #         queue = [apex]
+    #         visited = set()
+    #         while queue:
+    #             predicted_overlap_ids, visit = self.continue_mark(queue,
+    #                                                          apex,
+    #                                                          visited)
+    #             visited = visited.union(visit)
+    #             queue = list(self.check_overlap(predicted_overlap_ids,
+    #                                        visited))
 
     #
     # def mark_subclasses(self, node_id: int,
