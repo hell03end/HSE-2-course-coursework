@@ -2,18 +2,22 @@ from timeit import timeit
 from copy import deepcopy
 import numpy as np
 try:
-    from dev.ESOINN import ESOINNNode
+    from dev.ESOINN import ESOINNNode, EnhancedSelfOrganizingIncrementalNN
     from dev.mock import load_mock, NEIGHBOR_LOCAL_MAXES
-    from dev.analyzer import Plotter
+    from dev.commons import Plotter
 except ImportError as error:
     print(error.args)
-    from .ESOINN import ESOINNNode
+    from .ESOINN import ESOINNNode, EnhancedSelfOrganizingIncrementalNN
     from .mock import load_mock, NEIGHBOR_LOCAL_MAXES
-    from .analyzer import Plotter
+    from .commons import Plotter
 
 
 class UnitTest(Plotter):
     def reset_tests(self) -> None:
+        if not isinstance(self._nn, EnhancedSelfOrganizingIncrementalNN):
+            raise ValueError(f"Tests are compatible only with "
+                             f"EnhancedSelfOrganizingIncrementalNN class, got:"
+                             f" {type(self._nn)}")
         g = load_mock()
         self._nn.nodes.clear()  # for clean configuration
         for node_id in g.nodes:
