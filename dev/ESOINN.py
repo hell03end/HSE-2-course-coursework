@@ -509,14 +509,14 @@ class EnhancedSelfOrganizingIncrementalNN:
         return win1class, chance1 + chance2*(win1class == win2class)
 
     # algorithm 3.3
-    def update(self) -> set:
+    def update(self) -> dict:
         queue = set(self.nodes.keys())
-        apexes_ids = set()
+        apexes_ids = {}
         while queue:
             node_id = queue.pop()
             apex_id, visited = self.find_class_apex(node_id)
             queue -= visited
-            apexes_ids.add(apex_id)
+            apexes_ids[apex_id] = visited
             for vertex in visited:
                 self.nodes[vertex].subclass_id = apex_id
         return apexes_ids
@@ -544,6 +544,7 @@ class EnhancedSelfOrganizingIncrementalNN:
             nodes = deepcopy(self.nodes)
             neighbors = deepcopy(self.neighbors)
             edges = deepcopy(self.edges)
+        classes = self.update()
         return {
             'count_signals': self.count_signals,
             'count_neurons': len(self.nodes),
@@ -551,6 +552,7 @@ class EnhancedSelfOrganizingIncrementalNN:
             'nodes': nodes,
             'neighbors': neighbors,
             'edges': edges,
+            'classes': classes,
             'configuration': {
                 'C1': self.C1,
                 'C2': self.C2,
