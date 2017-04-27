@@ -252,16 +252,6 @@ class UnitTest(Plotter):
             node.subclass_id = 0
         return correct_marking, run_time
 
-    def test_find_neighbors_local_maxes(self, n_times=0) -> tuple:
-        results = {}
-        for node_id in self._nn.nodes:
-            results[node_id] = self._nn.find_neighbors_local_maxes(node_id)
-            # print(f"{node_id:<6}: {results[node_id]}")
-        return results == NEIGHBOR_LOCAL_MAXES, \
-            self.calc_run_time(
-                "for node_id in self._nn.nodes: "
-                "self._nn.find_neighbors_local_maxes(node_id)", n_times)
-
     def test_find_local_maxes(self, n_times=0) -> tuple:
         maxes = set(range(10))
         maxes.add(34)
@@ -472,7 +462,7 @@ class UnitTest(Plotter):
         apexes = self._nn.update()
         for node_id in self._nn.nodes.keys() - ignore_id:
             correct_mark &= self._nn.nodes[node_id].subclass_id == apex_id
-        return apexes == {apex_id}.union(ignore_id) and correct_mark, \
+        return apexes.keys() == {apex_id}.union(ignore_id) and correct_mark, \
             self.calc_run_time("self._nn.update()", n_times)
 
     def run_tests(self, n_times=0):
@@ -508,8 +498,6 @@ class UnitTest(Plotter):
                           **params)
         self.report_error(self.test_combine_subclasses, "combine_subclasses()",
                           **params)
-        self.report_error(self.test_find_neighbors_local_maxes,
-                          "find_neighbors_local_maxes()", **params)
         self.report_error(self.test_find_local_maxes, "find_local_maxes()",
                           **params)
         self.report_error(self.test_continue_mark, "continue_mark()", **params)
@@ -526,7 +514,6 @@ class UnitTest(Plotter):
         self.report_error(self.test_find_class_apex, "find_class_apex",
                           **params)
         self.report_error(self.test_update, "update", **params)
-
 
 class TrainTest(Plotter):
     pass
