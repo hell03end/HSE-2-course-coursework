@@ -164,16 +164,15 @@ class EnhancedSelfOrganizingIncrementalNN:
     # @TODO: add filter for all neighbors found
     def find_neighbors(self, start_node_id: int, depth=1) -> set:
         visited = {start_node_id}
-        queue = list(self.neighbors.get(start_node_id, set()) - visited)
+        queue = self.neighbors.get(start_node_id, set()) - visited
         while depth and queue:
             depth -= 1
             for vertex in queue.copy():  # @FIXME: do not use copy!
                 visited.add(vertex)
                 queue.remove(vertex)
-                queue.extend([
-                    node for node in self.neighbors[vertex] - visited
-                    if node not in visited
-                ])
+                for node in self.neighbors[vertex] - visited:
+                    if node not in visited:
+                        queue.add(node)
         return visited - {start_node_id}    
 
     def calc_threshold(self, node_id: int) -> float:
@@ -347,16 +346,16 @@ class EnhancedSelfOrganizingIncrementalNN:
     def change_class_id(self, node_id: int, class_id: int) -> None:
         self.nodes[node_id].subclass_id = class_id
         visited = {node_id}
-        queue = list(self.neighbors.get(node_id, set()) - visited)
+        queue = self.neighbors.get(node_id, set()) - visited
         # CHECKME: "while" cycle is not needed, but without it - didn't worked
         while queue:
-            for vertex in queue:
+            for vertex in queue.copy():
                 self.nodes[vertex].subclass_id = class_id
                 visited.add(vertex)
                 queue.remove(vertex)
                 for node in self.neighbors[vertex] - visited:
                     if node not in visited:
-                        queue.append(node)
+                        queue.add(node)
     
     def combine_subclasses(self, nodes_ids: "list of 2 ids") -> None:
         nodes = [self.nodes[nodes_ids[0]], self.nodes[nodes_ids[1]]]
@@ -411,13 +410,13 @@ class EnhancedSelfOrganizingIncrementalNN:
         return apexes
 
 
-    def continue_mark(self, node_ids:list, class_id:int, visited:set):
+    def continue_mark(self, node_ids:set, class_id:int, visited:set):
         predicted_overlap_ids = set()
         for node_id in node_ids:
-            queue = [node_id]
+            queue = {node_id}
             while queue:
-                for vertex in queue:
-                    for_extend = []
+                for vertex in queue.copy():
+                    for_extend = set()
                     vertex_density = self.nodes[vertex].density
                     queue.remove(vertex)
                     if vertex not in predicted_overlap_ids:
@@ -429,13 +428,13 @@ class EnhancedSelfOrganizingIncrementalNN:
                                 neighbor_id not in predicted_overlap_ids:
                                     is_overlap = True
                             else:
-                                for_extend.append(neighbor_id)
+                                for_extend.add(neighbor_id)
                         if is_overlap:
                             predicted_overlap_ids.add(vertex)
                         else:
                             visited.add(vertex)
                             self.nodes[vertex].subclass_id = class_id
-                            queue.extend(for_extend)
+                            queue = queue.union(for_extend)
         return predicted_overlap_ids, visited
 
     def check_overlap(self, overlap_ids: set, visited: set) -> set:
@@ -471,15 +470,15 @@ class EnhancedSelfOrganizingIncrementalNN:
     def separate_subclass(self):
         apexes = self.find_local_maxes()
         for apex in apexes:
-            queue = [apex]
+            queue = {apex}
             visited = set()
             while queue:
                 predicted_overlap_ids, visit = self.continue_mark(queue,
                                                              apex,
                                                              visited)
                 visited = visited.union(visit)
-                queue = list(self.check_overlap(predicted_overlap_ids,
-                                           visited))
+                queue = self.check_overlap(predicted_overlap_ids,
+                                           visited)
 
     def remove_noise(self) -> None:
         mean_density = np.sum([
@@ -524,16 +523,16 @@ class EnhancedSelfOrganizingIncrementalNN:
     def find_class_apex(self, start_node_id: int) -> tuple:
         apex_id = start_node_id
         visited = {start_node_id}
-        queue = list(self.neighbors.get(start_node_id, set()) - visited)
+        queue = self.neighbors.get(start_node_id, set()) - visited
         while queue:
-            for vertex in queue:
+            for vertex in queue.copy():
                 if self.nodes[apex_id].density < self.nodes[vertex].density:
                     apex_id = vertex
                 visited.add(vertex)
                 queue.remove(vertex)
                 for node in self.neighbors[vertex] - visited:
                     if node not in visited:
-                        queue.append(node)
+                        queue.add(node)
         return apex_id, visited
 
     def current_state(self, deep=True) -> dict:
