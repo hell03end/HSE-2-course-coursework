@@ -175,21 +175,64 @@ class UnitTest(Plotter):
             self.calc_run_time(f"self._nn.update_node_points({ids[1]}, "
                                f"{neighbors})", n_times)
 
-    # @FIXME: undone all
-    def test_update_node_density(self):
-        return [True]
+    # @CHECKME: Access to a private fields
+    def test_update_node_density(self, n_times) -> tuple:
+        Test_check = True
+        id1 = 0
+        self._nn.nodes[id1]._ESOINNNode__total_points = 0
+        self._nn.update_node_points(id1, list(self._nn.neighbors[id1]))
+        self._nn.nodes[id1]._ESOINNNode__acc_signals = 2
+        val_density = self._nn.nodes[id1].points / \
+                      self._nn.nodes[id1].accumulate_signals
 
-    # @FIXME: undone method testing
+        self._nn.nodes[id1]._ESOINNNode__total_points = 0
+        self._nn.update_node_density(id1, list(self._nn.neighbors[id1]))
+        Test_check &= val_density == self._nn.nodes[id1].density
+
+        # Return to start state
+        self.reset_tests()
+        return Test_check, \
+                self.calc_run_time(f"self._nn.update_node_density({id1}, "
+                                   f"{list(self._nn.neighbors[id1])})",
+                                   n_times)
+
+    # @CHECKME: Access to a private fields
     def test_update_feature_vectors(self, n_times=0) -> tuple:
         id1 = 0
-        run_time = None
-        if n_times > 0:
-            neighbors = self._nn.find_neighbors(id1)
-            nodes = deepcopy(self._nn.nodes)
-            run_time = timeit('self._nn.update_feature_vectors(id1, [0, 0], '
-                              'neighbors)', number=n_times, globals=locals())
-            self._nn.nodes = nodes
-        return True, run_time
+        input_signal = [2, 2.5]
+        win_learn_step = lambda t: 1 / t
+        neig_learn_step = lambda t: 1 / (100*t)
+
+        self._nn.nodes[id1]._ESOINNNode__acc_signals = 3
+        for neighbor_id in self._nn.neighbors[id1]:
+            self._nn.nodes[neighbor_id]._ESOINNNode__acc_signals = 2
+
+        winner_feature_vec = self._nn.nodes[id1].feature_vector + \
+            (input_signal - self._nn.nodes[id1].feature_vector) * \
+            win_learn_step(self._nn.nodes[id1].accumulate_signals)
+
+        neighbors_feature_vec = []
+        for neighbor_id in self._nn.neighbors[id1]:
+            neighbors_feature_vec.append(
+                self._nn.nodes[neighbor_id].feature_vector + \
+                (input_signal - self._nn.nodes[neighbor_id].feature_vector) * \
+                neig_learn_step(self._nn.nodes[id1].accumulate_signals))
+        self._nn.update_feature_vectors(id1,
+                                        input_signal,
+                                        self._nn.neighbors[id1])
+        Test_check = True
+        Test_check &= list(winner_feature_vec) == list(self._nn.nodes[id1].feature_vector)
+        for i, neighbor_id in enumerate(self._nn.neighbors[id1]):
+            Test_check &= list(neighbors_feature_vec[i]) == \
+                          list(self._nn.nodes[neighbor_id].feature_vector)
+
+        # Return to start state
+        self.reset_tests()
+        return Test_check, \
+               self.calc_run_time(f"self._nn.update_feature_vectors("
+                                  f"{id1},"
+                                  f"{input_signal},"
+                                  f"{self._nn.neighbors[id1]})", n_times)
 
     def test_remove_old_ages(self, n_times=0) -> tuple:
         ids = (1, 34)
@@ -203,19 +246,40 @@ class UnitTest(Plotter):
         return successfully_remove, \
             self.calc_run_time("self._nn.remove_old_ages()", n_times)
 
-    # @FIXME: undone method testing
     def test_calc_mean_density_in_subclass(self, n_times=0) -> tuple:
-        return True, self.calc_run_time(
-            "self._nn.calc_mean_density_in_subclass(0)", n_times)
+        id0, id1 = 0, 1
+        _, node_ids = self._nn.find_class_apex(id0)
+        density = 0
+        for node_id in node_ids:
+            density += self._nn.nodes[node_id].density
+        val_mean_density = density/len(node_ids)
+        mean_density = self._nn.calc_mean_density_in_subclass(id1)
+        return mean_density == val_mean_density, self.calc_run_time(
+            f"self._nn.calc_mean_density_in_subclass({id1})", n_times)
 
-    # @FIXME: undone all
-    def test_calc_alpha(self):
-        return [True]
+    def test_calc_alpha(self, n_times) -> tuple:
+        id1 = 1
+        apex_density = 15
+        mean_density = self._nn.calc_mean_density_in_subclass(id1)
+        if 2*mean_density >= apex_density:
+            val_alpha =  0
+        elif 3*mean_density >= apex_density:
+            val_alpha =  0.5
+        else:
+            val_alpha = 1
+        alpha = self._nn.calc_alpha(id1, apex_density)
+        return alpha == val_alpha, self.calc_run_time(
+               f"self._nn.calc_alpha({id1}, {apex_density})", n_times)
 
-    # @FIXME: undone method testing
     def test_merge_subclass_condition(self, n_times=0) -> tuple:
-        return True, self.calc_run_time(
-            "self._nn.merge_subclass_condition((0, 1))", n_times)
+        self._nn.separate_subclass()
+        Test_check = self._nn.merge_subclass_condition([1,11])
+        Test_check &= self._nn.merge_subclass_condition([12,15]) != True
+
+        # Return to start state
+        self.reset_tests()
+        return Test_check == True, self.calc_run_time(
+            f"self._nn.merge_subclass_condition({[0, 1]})", n_times)
 
     def test_change_class_id(self, n_times=0) -> tuple:
         id1, class_id = 0, 1
@@ -484,14 +548,14 @@ class UnitTest(Plotter):
         self.report_error(self.test_update_node_points, "update_node_points()",
                           **params)
         self.report_error(self.test_update_node_density,
-                          "update_node_density()")
+                          "update_node_density()", **params)
         self.report_error(self.test_update_feature_vectors,
                           "update_feature_vectors()", **params)
         self.report_error(self.test_remove_old_ages, "remove_old_ages()",
                           **params)
         self.report_error(self.test_calc_mean_density_in_subclass,
                           "calc_mean_density_in_subclass()", **params)
-        self.report_error(self.test_calc_alpha, "calc_alpha()")
+        self.report_error(self.test_calc_alpha, "calc_alpha()", **params)
         self.report_error(self.test_merge_subclass_condition,
                           "merge_subclass_condition()", **params)
         self.report_error(self.test_change_class_id, "change_class_id()",
@@ -507,8 +571,6 @@ class UnitTest(Plotter):
         self.report_error(self.test_check_overlap, "check_overlap()", **params)
         self.report_error(self.test_separate_subclass, "separate_subclass()",
                           **params)
-        # self.report_error(self.test_calc_mean_density_in_subclass,
-        #                   "calc_mean_density_in_subclass", **params)
         self.report_error(self.test_remove_noise, "remove_noise", **params)
         self.report_error(self.test_predict, "predict", **params)
         self.report_error(self.test_find_class_apex, "find_class_apex",
