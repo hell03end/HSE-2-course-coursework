@@ -432,18 +432,6 @@ class UnitTest(Plotter):
         return Test_check, self.calc_run_time("self._nn.separate_subclass()",
                                               n_times)
 
-    # @FIXME: undone all
-    def test_mark_subclasses(self, n_times=0):
-        pass
-
-    # @FIXME: undone all
-    def test_calc_heavy_neighbor_min_dist(self, n_times=0):
-        pass
-
-    # @FIXME: undone all
-    def test_separate_subclasses(self, n_times=0):
-        pass
-
     def test_remove_noise(self, n_times=0) -> tuple:
         mean_density = np.sum([
             node.density for node in self._nn.nodes.values()
@@ -531,15 +519,8 @@ class UnitTest(Plotter):
         self.report_error(self.test_check_overlap, "check_overlap()", **params)
         self.report_error(self.test_separate_subclass, "separate_subclass()",
                           **params)
-
-        # self.report_error(self.test_mark_subclasses, "mark_subclasses",
-        #                   **params)
         # self.report_error(self.test_calc_mean_density_in_subclass,
         #                   "calc_mean_density_in_subclass", **params)
-        # self.report_error(self.test_separate_subclasses, "separate_subclasses",
-        #                   **params)
-
-
         self.report_error(self.test_remove_noise, "remove_noise", **params)
         self.report_error(self.test_predict, "predict", **params)
         self.report_error(self.test_find_class_apex, "find_class_apex",
