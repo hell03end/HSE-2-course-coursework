@@ -316,6 +316,7 @@ class EnhancedSelfOrganizingIncrementalNN:
     
     def calc_mean_density_in_subclass(self, node_id: int) -> float:
         neighbors = self.find_neighbors(node_id, depth=-1)
+        neighbors.add(node_id)
         return float(1/len(neighbors)*np.sum([
             self.nodes[node_id].density for node_id in neighbors
         ]))
