@@ -370,28 +370,6 @@ class EnhancedSelfOrganizingIncrementalNN:
             else:
                 self.change_class_id(nodes_ids[1], subclass_ids[0])
 
-    # @CHECKME: is it necessary?
-    def find_neighbors_local_maxes(self, node_id: int) -> set:
-        apexes = set()
-        visited = set()
-        queue = [node_id]
-        for vertex in queue:
-            is_local_max = True
-            vertex_density = self.nodes[vertex].density
-            for neighbor_id in self.neighbors.get(vertex, {}):
-                if self.nodes[neighbor_id].density > vertex_density:
-                    if neighbor_id not in visited:
-                        queue.append(neighbor_id)
-                    is_local_max = False
-                visited.add(neighbor_id)
-            if is_local_max:
-                apexes.add(vertex)
-            visited.add(vertex)
-
-        if not apexes:
-            return {node_id}
-        return apexes
-
     def find_local_maxes(self) -> set:
         apexes = set()
         for node_id in self.nodes.keys():
