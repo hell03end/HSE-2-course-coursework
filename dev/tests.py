@@ -60,7 +60,7 @@ class UnitTest(Plotter):
     def test_find_winners(self, n_times=0) -> tuple:
         feature_vector = [5.5, 3]
         winners, dists = self._nn.find_winners(feature_vector)
-        dist0 = dists[1] == self._nn.metrics([5.75, 3.25], feature_vector)
+        dist0 = dists[0] == self._nn.metrics([5.75, 3.25], feature_vector)
         dist1 = dists[1] == self._nn.metrics([6.25, 3.25], feature_vector)
         return winners == (30, 31) and dist0 and dist1, \
             self.calc_run_time(f"self._nn.find_winners({feature_vector})",
