@@ -24,24 +24,36 @@ class Analyzer:
     def update_state(self, nn: EnhancedSelfOrganizingIncrementalNN) -> None:
         self._state = nn.current_state(deep=True)
 
-    def get_mean_classes_feature_vectors(self):
+    def get_mean_classes_feature_vectors(self) -> dict:
         if not self._state['classes']:
-            self._logger.warn("There are no classes!")
-            return
+            self._logger.error("There are no classes!")
         nodes = self._state['nodes']
         mean_features = {}
         for class_id in self._state['classes']:
-            subclass = self._state['classes'][class_id]
             mean_features[class_id] = \
-                1/len(subclass)*np.sum(
-                    [nodes[node_id].feature_vector for node_id in subclass])
+                np.mean([nodes[node].feature_vector
+                         for node in self._state['classes'][class_id]])
         return mean_features
 
-    def get_mean_classes_density(self):
-        pass
+    def get_mean_classes_density(self) -> dict:
+        if not self._state['classes']:
+            self._logger.error("There are no classes!")
+        nodes = self._state['nodes']
+        mean_density = {}
+        for class_id in self._state['classes']:
+            mean_density[class_id] = \
+                np.mean([nodes[node].density
+                         for node in self._state['classes'][class_id]])
+        return mean_density
 
-    def get_classes_sizes(self):
-        pass
+    def get_classes_sizes(self) -> dict:
+        if not self._state['classes']:
+            self._logger.error("There are no classes!")
+        classes = {
+            class_id: len(self._state['classes'][class_id])
+            for class_id in self._state['classes']
+        }
+        return classes
 
     def get_inclass_distances(self):
         pass
