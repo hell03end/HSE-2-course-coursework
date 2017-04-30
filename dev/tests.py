@@ -13,6 +13,10 @@ except ImportError as error:
 
 
 class UnitTest(Plotter):
+    def __init__(self, nn, logging_level="debug"):
+        super().__init__(nn, logging_level)
+        self.__success = True
+
     def reset_tests(self) -> None:
         if not isinstance(self._nn, EnhancedSelfOrganizingIncrementalNN):
             raise ValueError(f"Tests are compatible only with "
@@ -41,6 +45,7 @@ class UnitTest(Plotter):
         res, *time = test(**kwargs)
         if not res:
             self._logger.error(f"TEST: {name}")
+            self.__success = False
         # else:
         #     self._logger.info(f"TEST: {name}")
         if time and kwargs.get('n_times', None):
@@ -55,7 +60,7 @@ class UnitTest(Plotter):
     def test_find_winners(self, n_times=0) -> tuple:
         feature_vector = [5.5, 3]
         winners, dists = self._nn.find_winners(feature_vector)
-        dist0 = dists[0] == self._nn.metrics([5.75, 3.25], feature_vector)
+        dist0 = dists[1] == self._nn.metrics([5.75, 3.25], feature_vector)
         dist1 = dists[1] == self._nn.metrics([6.25, 3.25], feature_vector)
         return winners == (30, 31) and dist0 and dist1, \
             self.calc_run_time(f"self._nn.find_winners({feature_vector})",
@@ -529,7 +534,7 @@ class UnitTest(Plotter):
         return apexes.keys() == {apex_id}.union(ignore_id) and correct_mark, \
             self.calc_run_time("self._nn.update()", n_times)
 
-    def run_tests(self, n_times=0):
+    def run_tests(self, n_times=0) -> bool:
         self.reset_tests()
         params = {
             'n_times': n_times
@@ -576,6 +581,8 @@ class UnitTest(Plotter):
         self.report_error(self.test_find_class_apex, "find_class_apex",
                           **params)
         self.report_error(self.test_update, "update", **params)
+
+        return self.__success
 
 class TrainTest(Plotter):
     pass

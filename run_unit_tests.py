@@ -24,9 +24,11 @@ if __name__ == "__main__":
     unit_test = UnitTest(test_nn)
     if args.plot == 1 or args.plot == 3:
         unit_test.display_info(plot=True)
-    unit_test.run_tests(args.n_times)
+    success = unit_test.run_tests(args.n_times)
     if args.plot == 2 or args.plot == 3:
         unit_test.display_info(plot=True)
-    unit_test.display_info(log=args.log)
+    unit_test.display_info(log=args.log, show=False)
     if args.state:
         pprint(test_nn.current_state(deep=False))
+    if not success:
+        exit(1)
