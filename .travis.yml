@@ -34,6 +34,15 @@ git:
 
 # for telegram notifications
 notifications:
+  webhooks: https://fathomless-fjord-24024.herokuapp.com/notify?secret=What's going to be then, yeah?
+    # urls:
+    #   - https://fathomless-fjord-24024.herokuapp.com/notify?secret=What's going to be then, yeah?
+    # on_success: change
+    # on_failure: always
+    # on_start: change
+    # on_cancel: always
+    # on_error: always
+  
   email:
     recipients:
       - dmdesk1@gmail.com
@@ -41,13 +50,4 @@ notifications:
     on_failure: always
     on_start: never
     on_cancel: change
-    on_error: always
-
-  webhooks:
-    urls:
-      - https://fathomless-fjord-24024.herokuapp.com/notify?secret=What's going to be then, yeah?
-    on_success: change
-    on_failure: always
-    on_start: change
-    on_cancel: always
     on_error: always
