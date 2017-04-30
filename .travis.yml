@@ -3,10 +3,10 @@ python:
   - "3.6"
 
 # installing additional dependencies
-before_install:
-  - sudo apt-get -qq -y update
-  - sudo apt-get -qq -y install nvidia-cuda-toolkit
-  - sudo apt-get -qq -y install gcc
+# before_install:
+#   - sudo apt-get -qq -y update
+#   - sudo apt-get -qq -y install nvidia-cuda-toolkit
+#   - sudo apt-get -qq -y install gcc
 
 # command to install dependencies
 install: "pip install -r requirements.txt"
