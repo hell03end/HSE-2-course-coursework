@@ -1,6 +1,7 @@
 from timeit import timeit
 from copy import deepcopy
 import numpy as np
+import re
 try:
     from dev.ESOINN import ESOINNNode, EnhancedSelfOrganizingIncrementalNN
     from dev.mock import load_mock, NEIGHBOR_LOCAL_MAXES
@@ -41,15 +42,17 @@ class UnitTest(Plotter):
         self._nn.neighbors = deepcopy(g.neighbors)
         self._nn.edges = deepcopy(g.edges)
 
-    def report_error(self, test, name, **kwargs) -> None:
+    def report_error(self, test: callable(...), **kwargs) -> None:
         res, *time = test(**kwargs)
+        name = re.sub(r"\btest_", '', str(test.__name__))
         if not res:
             self._logger.error(f"TEST: {name}")
             self.__success = False
         # else:
         #     self._logger.info(f"TEST: {name}")
         if time and kwargs.get('n_times', None):
-            self._logger.debug(f"{time[0]:.5}\tfor {kwargs['n_times']} {name}")
+            self._logger.debug(f"{str(time[0]):10.10}\t"
+                               f"for {kwargs['n_times']} {name}")
 
     def calc_run_time(self, target_call: str, n_times=0, **kwargs):
         if n_times <= 0:
@@ -182,7 +185,7 @@ class UnitTest(Plotter):
 
     # @CHECKME: Access to a private fields
     def test_update_node_density(self, n_times) -> tuple:
-        Test_check = True
+        test_check = True
         id1 = 0
         self._nn.nodes[id1]._ESOINNNode__total_points = 0
         self._nn.update_node_points(id1, list(self._nn.neighbors[id1]))
@@ -192,21 +195,24 @@ class UnitTest(Plotter):
 
         self._nn.nodes[id1]._ESOINNNode__total_points = 0
         self._nn.update_node_density(id1, list(self._nn.neighbors[id1]))
-        Test_check &= val_density == self._nn.nodes[id1].density
+        test_check &= val_density == self._nn.nodes[id1].density
 
         # Return to start state
         self.reset_tests()
-        return Test_check, \
-                self.calc_run_time(f"self._nn.update_node_density({id1}, "
-                                   f"{list(self._nn.neighbors[id1])})",
-                                   n_times)
+        return test_check, self.calc_run_time(
+            f"self._nn.update_node_density({id1}, "
+            f"{list(self._nn.neighbors[id1])})", n_times)
 
     # @CHECKME: Access to a private fields
     def test_update_feature_vectors(self, n_times=0) -> tuple:
         id1 = 0
         input_signal = [2, 2.5]
-        win_learn_step = lambda t: 1 / t
-        neig_learn_step = lambda t: 1 / (100*t)
+
+        def win_learn_step(t):
+            return 1/t
+
+        def neig_learn_step(t):
+            return 1/(100*t)
 
         self._nn.nodes[id1]._ESOINNNode__acc_signals = 3
         for neighbor_id in self._nn.neighbors[id1]:
@@ -219,25 +225,24 @@ class UnitTest(Plotter):
         neighbors_feature_vec = []
         for neighbor_id in self._nn.neighbors[id1]:
             neighbors_feature_vec.append(
-                self._nn.nodes[neighbor_id].feature_vector + \
-                (input_signal - self._nn.nodes[neighbor_id].feature_vector) * \
+                self._nn.nodes[neighbor_id].feature_vector +
+                (input_signal - self._nn.nodes[neighbor_id].feature_vector) *
                 neig_learn_step(self._nn.nodes[id1].accumulate_signals))
         self._nn.update_feature_vectors(id1,
                                         input_signal,
                                         self._nn.neighbors[id1])
-        Test_check = True
-        Test_check &= list(winner_feature_vec) == list(self._nn.nodes[id1].feature_vector)
+        test_check = True
+        test_check &= list(winner_feature_vec) == \
+                      list(self._nn.nodes[id1].feature_vector)
         for i, neighbor_id in enumerate(self._nn.neighbors[id1]):
-            Test_check &= list(neighbors_feature_vec[i]) == \
+            test_check &= list(neighbors_feature_vec[i]) == \
                           list(self._nn.nodes[neighbor_id].feature_vector)
 
         # Return to start state
         self.reset_tests()
-        return Test_check, \
-               self.calc_run_time(f"self._nn.update_feature_vectors("
-                                  f"{id1},"
-                                  f"{input_signal},"
-                                  f"{self._nn.neighbors[id1]})", n_times)
+        return test_check, self.calc_run_time(
+            f"self._nn.update_feature_vectors({id1}, {input_signal}, "
+            f"{self._nn.neighbors[id1]})", n_times)
 
     def test_remove_old_ages(self, n_times=0) -> tuple:
         ids = (1, 34)
@@ -278,12 +283,12 @@ class UnitTest(Plotter):
 
     def test_merge_subclass_condition(self, n_times=0) -> tuple:
         self._nn.separate_subclass()
-        Test_check = self._nn.merge_subclass_condition([1,11])
-        Test_check &= self._nn.merge_subclass_condition([12,15]) != True
+        test_check = self._nn.merge_subclass_condition([1,11])
+        test_check &= not self._nn.merge_subclass_condition([12, 15])
 
         # Return to start state
         self.reset_tests()
-        return Test_check == True, self.calc_run_time(
+        return test_check, self.calc_run_time(
             f"self._nn.merge_subclass_condition({[0, 1]})", n_times)
 
     def test_change_class_id(self, n_times=0) -> tuple:
@@ -539,50 +544,35 @@ class UnitTest(Plotter):
         params = {
             'n_times': n_times
         }
-        self.report_error(self.test_find_winners, "find_winners()", **params)
-        self.report_error(self.test_find_neighbors, "find_neighbors()",
-                          **params)
-        self.report_error(self.test_calc_threshold, "calc_threshold()",
-                          **params)
-        self.report_error(self.test_create_node, "create_node()")
-        self.report_error(self.test_create_edges, "create_edges()")
-        self.report_error(self.test_remove_edges, "remove_edges()")
-        self.report_error(self.test_remove_node, "remove_node()")
-        self.report_error(self.test_update_edges_age, "update_edges_age()",
-                          **params)
-        self.report_error(self.test_update_node_points, "update_node_points()",
-                          **params)
-        self.report_error(self.test_update_node_density,
-                          "update_node_density()", **params)
-        self.report_error(self.test_update_feature_vectors,
-                          "update_feature_vectors()", **params)
-        self.report_error(self.test_remove_old_ages, "remove_old_ages()",
-                          **params)
-        self.report_error(self.test_calc_mean_density_in_subclass,
-                          "calc_mean_density_in_subclass()", **params)
-        self.report_error(self.test_calc_alpha, "calc_alpha()", **params)
-        self.report_error(self.test_merge_subclass_condition,
-                          "merge_subclass_condition()", **params)
-        self.report_error(self.test_change_class_id, "change_class_id()",
-                          **params)
-        self.report_error(self.test_combine_subclasses, "combine_subclasses()",
-                          **params)
-        self.report_error(self.test_find_local_maxes, "find_local_maxes()",
-                          **params)
-        self.report_error(self.test_continue_mark, "continue_mark()", **params)
-        self.report_error(self.test_get_nearest_neighbor,
-                          "get_nearest_neighbor()",
-                          **params)
-        self.report_error(self.test_check_overlap, "check_overlap()", **params)
-        self.report_error(self.test_separate_subclass, "separate_subclass()",
-                          **params)
-        self.report_error(self.test_remove_noise, "remove_noise", **params)
-        self.report_error(self.test_predict, "predict", **params)
-        self.report_error(self.test_find_class_apex, "find_class_apex",
-                          **params)
-        self.report_error(self.test_update, "update", **params)
+        self.report_error(self.test_find_winners, **params)
+        self.report_error(self.test_find_neighbors, **params)
+        self.report_error(self.test_calc_threshold, **params)
+        self.report_error(self.test_create_node)
+        self.report_error(self.test_create_edges)
+        self.report_error(self.test_remove_edges)
+        self.report_error(self.test_remove_node)
+        self.report_error(self.test_update_edges_age, **params)
+        self.report_error(self.test_update_node_points, **params)
+        self.report_error(self.test_update_node_density, **params)
+        self.report_error(self.test_update_feature_vectors, **params)
+        self.report_error(self.test_remove_old_ages, **params)
+        self.report_error(self.test_calc_mean_density_in_subclass, **params)
+        self.report_error(self.test_calc_alpha, **params)
+        self.report_error(self.test_merge_subclass_condition, **params)
+        self.report_error(self.test_change_class_id, **params)
+        self.report_error(self.test_combine_subclasses, **params)
+        self.report_error(self.test_find_local_maxes, **params)
+        self.report_error(self.test_continue_mark, **params)
+        self.report_error(self.test_get_nearest_neighbor, **params)
+        self.report_error(self.test_check_overlap, **params)
+        self.report_error(self.test_separate_subclass, **params)
+        self.report_error(self.test_remove_noise, **params)
+        self.report_error(self.test_predict, **params)
+        self.report_error(self.test_find_class_apex, **params)
+        self.report_error(self.test_update, **params)
 
         return self.__success
+
 
 class TrainTest(Plotter):
     pass
