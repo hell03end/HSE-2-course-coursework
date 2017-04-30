@@ -137,5 +137,5 @@ class Plotter:
             plt.axis('equal')
         plt.show()
 
-    def get_state(self) -> dict:
+    def current_state(self) -> dict:
         return self._nn.current_state(deep=True)

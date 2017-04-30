@@ -388,7 +388,6 @@ class EnhancedSelfOrganizingIncrementalNN:
                 apexes.add(node_id)
         return apexes
 
-
     def continue_mark(self, node_ids:set, class_id:int, visited:set):
         predicted_overlap_ids = set()
         for node_id in node_ids:
@@ -402,7 +401,7 @@ class EnhancedSelfOrganizingIncrementalNN:
                         is_overlap = False
                         for neighbor_id in self.neighbors.get(vertex, {}):
                             neighbor_density = self.nodes[neighbor_id].density
-                            if  neighbor_density > vertex_density:
+                            if neighbor_density > vertex_density:
                                 if neighbor_id not in visited and \
                                 neighbor_id not in predicted_overlap_ids:
                                     is_overlap = True
@@ -423,7 +422,8 @@ class EnhancedSelfOrganizingIncrementalNN:
             if near_id in visited:
                 continue_ids.add(node_id)
                 for neighbor_id in self.neighbors.get(node_id, {}).copy():
-                    if self.nodes[neighbor_id].density > self.nodes[node_id].density:
+                    if self.nodes[neighbor_id].density > \
+                            self.nodes[node_id].density:
                         if neighbor_id not in visited:
                             if neighbor_id not in overlap_ids:
                                 self.remove_edges((neighbor_id, node_id))
@@ -446,7 +446,7 @@ class EnhancedSelfOrganizingIncrementalNN:
                         near_id = neighbor_id
         return near_id
 
-    def separate_subclass(self):
+    def separate_subclasses(self):
         apexes = self.find_local_maxes()
         for apex in apexes:
             queue = {apex}

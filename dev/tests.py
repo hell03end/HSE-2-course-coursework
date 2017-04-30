@@ -282,7 +282,7 @@ class UnitTest(Plotter):
                f"self._nn.calc_alpha({id1}, {apex_density})", n_times)
 
     def test_merge_subclass_condition(self, n_times=0) -> tuple:
-        self._nn.separate_subclass()
+        self._nn.separate_subclasses()
         test_check = self._nn.merge_subclass_condition([1,11])
         test_check &= not self._nn.merge_subclass_condition([12, 15])
 
@@ -375,7 +375,7 @@ class UnitTest(Plotter):
                                   f"{visited})",
                                   n_times)
 
-    def test_separate_subclass(self, n_times=0) -> tuple:
+    def test_separate_subclasses(self, n_times=0) -> tuple:
         neighbors = {0: {15, 16, 27},
                      1: {12, 33},
                      4: {10, 11},
@@ -477,7 +477,7 @@ class UnitTest(Plotter):
                     33: 1,
                     34: 34}
 
-        self._nn.separate_subclass()
+        self._nn.separate_subclasses()
         Test_check = True
 
         # Zeroing out all edges age (because some edges age = 2)
@@ -493,7 +493,7 @@ class UnitTest(Plotter):
             test_subclasses[node_id] = self._nn.nodes[node_id].subclass_id
 
         Test_check &= test_subclasses == subclasses
-        return Test_check, self.calc_run_time("self._nn.separate_subclass()",
+        return Test_check, self.calc_run_time("self._nn.separate_subclasses()",
                                               n_times)
 
     def test_remove_noise(self, n_times=0) -> tuple:
@@ -565,7 +565,7 @@ class UnitTest(Plotter):
         self.report_error(self.test_continue_mark, **params)
         self.report_error(self.test_get_nearest_neighbor, **params)
         self.report_error(self.test_check_overlap, **params)
-        self.report_error(self.test_separate_subclass, **params)
+        self.report_error(self.test_separate_subclasses, **params)
         self.report_error(self.test_remove_noise, **params)
         self.report_error(self.test_predict, **params)
         self.report_error(self.test_find_class_apex, **params)
