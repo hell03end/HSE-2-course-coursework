@@ -1,5 +1,6 @@
 from copy import deepcopy
 import numpy as np
+import re
 try:
     from dev.commons import enable_logging
 except ImportError as error:
@@ -70,13 +71,12 @@ class ESOINNNode:
         else:
             self.__density = self.__total_points/self.accumulate_signals
 
-    def update_feature_vector(self, signal: "feature vector",
-                              coeff: float) -> None:
-        self.__weights += coeff * (signal - self.__weights)
+    def update_feature_vector(self, signal: np.array, coeff: float) -> None:
+        self.__weights += coeff*(signal - self.__weights)
 
 
 class EnhancedSelfOrganizingIncrementalNN:
-    def __init__(self, init_nodes: "2 feature vectors", c1=0.001, c2=1,
+    def __init__(self, init_nodes: list, c1=0.001, c2=1,
                  learning_step=200, max_age=50, forget=False, radius_cut_off=1,
                  metrics=euclidean_distance,
                  learning_rate_winner=learning_rate_generator(),
@@ -93,7 +93,10 @@ class EnhancedSelfOrganizingIncrementalNN:
         self.rc = radius_cut_off
         self.rate = learning_rate_winner
         self.rate_neighbor = learning_rate_winner_neighbor
-        self._logger = enable_logging(f"{__name__}.ESOINN", logging_level)
+
+        logger_name = re.sub(r"[' <>]", '', str(self.__class__))
+        logger_name = re.sub(r"^class", '', logger_name)
+        self._logger = enable_logging(f"{logger_name}.ESOINN", logging_level)
         
         self.nodes = {i: ESOINNNode(init_nodes[i]) for i in (0, 1)}
         # @TODO: use { node_id: { neighbor_id: age } } instead of self.neighbors, self.edges
@@ -101,14 +104,12 @@ class EnhancedSelfOrganizingIncrementalNN:
         self.edges = {}  # key = tuple(2), where t[0] < t[1], value = age/None
 
     # @FIXME: check condition of adding new node (thresholds usage)
-    # @TODO: add partial_fit instead
-    # @UNTESTED
-    def partial_fit(self, input_signal: "feature vector") -> None:
+    def partial_fit(self, input_signal: np.array) -> None:
         self.count_signals += 1
         
         winners_ids, distances = self.find_winners(input_signal)
         if distances[0] > self.calc_threshold(winners_ids[0]) \
-                or distances[1] > self.calc_threshold(winners_ids[1]):
+                and distances[1] > self.calc_threshold(winners_ids[1]):
             self.create_node(input_signal)
             return
         
@@ -117,7 +118,6 @@ class EnhancedSelfOrganizingIncrementalNN:
         
         # do it one time only 'cause it takes long time
         winner_neighbors = self.find_neighbors(winners_ids[0], depth=self.rc)
-        # @CHECKME: обновление количества побед нейрона - не знаю куда поставить, но точно до подсчета плотности
         self.nodes[winners_ids[0]].update_accumulate_signals()
         
         self.update_node_density(winners_ids[0], winner_neighbors)
@@ -129,11 +129,10 @@ class EnhancedSelfOrganizingIncrementalNN:
         self.remove_old_ages()
         
         if not self.count_signals % self.learning_step:
-            self.separate_subclasses()  # @TODO: algorithm 3.1
-            self.remove_noise()  # @TODO: noize removal
+            self.separate_subclasses()
+            self.remove_noise()
 
-    # @UNTESTED
-    def fit(self, signals: "list of feature vectors", get_state=False):
+    def fit(self, signals: list, get_state=False):
         self._logger.debug("Start training")
         for signal in signals:
             self.partial_fit(signal)
