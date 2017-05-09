@@ -4,9 +4,9 @@ import re
 
 
 # @TODO: use logging to file
-# @TODO: use names of classes or manual names instead of __name__
 # @FIXME: correct work of logging level
-def enable_logging(name=None, level="info"):
+def enable_logging(name=None, level="info", full_info=True,
+                   clear_class_name=True):
     # @TODO: pass filename, filemode
     _level = logging.INFO
     if level[0] == 'd':
@@ -17,8 +17,15 @@ def enable_logging(name=None, level="info"):
         _level = logging.ERROR
     elif level[0] == 'c':
         _level = logging.CRITICAL
-    logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s"
-                               " - %(message)s")
+    if full_info:
+        logging.basicConfig(format="%(asctime)s - %(name)s - %(levelname)s"
+                                   " - %(message)s")
+    else:
+        logging.basicConfig(format="%(message)s")
+
+    if clear_class_name:
+        name = re.sub(r"^class", '', re.sub(r"[' <>]", '', str(name)))
+
     if name:
         logger = logging.getLogger(name)
     else:
@@ -31,9 +38,7 @@ def enable_logging(name=None, level="info"):
 class Plotter:
     def __init__(self, nn, logging_level="debug"):
         self._nn = nn
-        logger_name = re.sub(r"[' <>]", '', str(self.__class__))
-        logger_name = re.sub(r"^class", '', logger_name)
-        self._logger = enable_logging(f"{logger_name}", logging_level)
+        self._logger = enable_logging(f"{self.__class__}", logging_level)
 
     def display_nodes(self, plot=False, show=False, log=False) -> None:
         state = self._nn.current_state(deep=False)
