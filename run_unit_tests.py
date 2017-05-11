@@ -20,7 +20,7 @@ def parse_argv():
 
 if __name__ == "__main__":
     args = parse_argv()
-    test_nn = EnhancedSelfOrganizingIncrementalNN([[1, 1], [1, 1]])
+    test_nn = EnhancedSelfOrganizingIncrementalNN()
     unit_test = UnitTest(test_nn)
     if args.plot == 1 or args.plot == 3:
         unit_test.display_info(plot=True)
