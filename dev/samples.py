@@ -8,7 +8,6 @@ except ImportError as error:
     from .mock import Node
 
 
-# @TODO: add generators for training data
 class TrainingSamples:
     def __init__(self, random_state: int=123) -> None:
         self.__seed = int(random_state)
@@ -131,8 +130,8 @@ class TrainingSamples:
         if isinstance(self.__samples[0], Node):
             x, y, subclass = [], [], []
             for sample in self.__samples:
-                x.append(sample.feature_vector[0])
-                y.append(sample.feature_vector[1])
+                x.append(sample.features[0])
+                y.append(sample.features[1])
                 subclass.append(sample.subclass_id)
             plt.scatter(x, y, c=subclass)
         else:

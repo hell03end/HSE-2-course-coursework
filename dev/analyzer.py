@@ -17,9 +17,7 @@ class Analyzer:
             raise ValueError(f"Only EnhancedSelfOrganizingIncrementalNN can be"
                              f"analyzed, got: {type(nn)}")
         self._state = nn.current_state(deep=True)
-        logger_name = re.sub(r"[' <>]", '', str(self.__class__))
-        logger_name = re.sub(r"^class", '', logger_name)
-        self._logger = enable_logging(f"{logger_name}", logging_level)
+        self._logger = enable_logging(f"{self.__class__}", logging_level)
 
     def update_state(self, nn: EnhancedSelfOrganizingIncrementalNN) -> None:
         self._state = nn.current_state(deep=True)
@@ -31,7 +29,7 @@ class Analyzer:
         mean_features = {}
         for class_id in self._state['classes']:
             mean_features[class_id] = \
-                np.mean([nodes[node].feature_vector
+                np.mean([nodes[node].features
                          for node in self._state['classes'][class_id]])
         return mean_features
 

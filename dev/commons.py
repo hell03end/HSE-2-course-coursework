@@ -50,7 +50,7 @@ class Plotter:
             scale_x, scale_y = 0.05, 0.05
             x, y, mark = [], [], []
             for node_id in nodes:
-                features = nodes[node_id].feature_vector
+                features = nodes[node_id].features
                 x.append(features[0])
                 y.append(features[1])
 
@@ -59,7 +59,7 @@ class Plotter:
             plt.title("Topology")
 
             for node_id in nodes:
-                features = nodes[node_id].feature_vector
+                features = nodes[node_id].features
                 plt.annotate(node_id, [features[0]+scale_x,
                                        features[1]+2*scale_y])
                 plt.annotate(f"{float(nodes[node_id].density):1.5}",
@@ -81,7 +81,7 @@ class Plotter:
         for node_id in nodes:
             node = nodes[node_id]
             print(f"| {node_id:<{width_id}}|"
-                  f"{str(node.feature_vector):^30}|"
+                  f"{str(node.features):^30}|"
                   f"{node.subclass_id:{width_class}} | "
                   f"{str(node.density):20.20}|")
         print(f"|{'—'*(width_id+1)}|{'—'*30}|"
@@ -111,7 +111,7 @@ class Plotter:
             for edge in edges:
                 x, y = [], []
                 for node_id in edge:
-                    node_features = nodes[node_id].feature_vector
+                    node_features = nodes[node_id].features
                     x.append(node_features[0])
                     y.append(node_features[1])
                 plt.plot(x, y, '#9f9fa3')
