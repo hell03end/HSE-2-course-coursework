@@ -16,7 +16,7 @@ __pycache__/
 # *backup*
 .idea/
 bak/
-# src/
+src/
 local/
 
 ### IPython Notebook
