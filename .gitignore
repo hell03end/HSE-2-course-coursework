@@ -10,12 +10,14 @@ __pycache__/
 *.log
 
 ### Media:
-*.pdf
+# *.pdf
 
 ### Specific PATHs:
+# *backup*
 .idea/
 bak/
 src/
+local/
 
 ### IPython Notebook
 .ipynb_checkpoints
