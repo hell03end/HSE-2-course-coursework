@@ -3,9 +3,11 @@ import numpy as np
 import random
 try:
     from dev.mock import Node
+    from dev.commons import enable_logging
 except ImportError as error:
     print(error.args)
     from .mock import Node
+    from .commons import enable_logging
 
 
 class TrainingSamples:
@@ -14,6 +16,7 @@ class TrainingSamples:
         self.__distances = set()
         self.__params = {}
         self.__samples = []
+        self.__logger = enable_logging(f"{self.__class__}")
         random.seed(self.__seed)
 
     def _reload_state(self, random_state: int) -> None:
@@ -50,9 +53,9 @@ class TrainingSamples:
                          random.gauss(pair[1], **self.__params)))
 
         if isinstance(size, float) or isinstance(size, int):
-            noise_size = size/100*noise
+            noise_size = count*size/100*noise
         else:
-            noise_size = max(size)/100*noise
+            noise_size = sum(size)/100*noise
         for i in range(int(noise_size)):
             params = {
                 'a': 0 - 0.5/self.__params['sigma'],
@@ -70,6 +73,7 @@ class TrainingSamples:
         if shuffle:
             random.shuffle(self.__samples)
         self.__samples = np.array(self.__samples)
+        self.__logger.info(f"Sample size: {len(self.__samples)}")
         return self.current_state()
 
     def get_beta_sample(self, count=2, size=1000, bias=1, noise=0,
@@ -102,9 +106,9 @@ class TrainingSamples:
                          random.betavariate(**self.__params)*scale + pair[1]))
 
         if isinstance(size, float) or isinstance(size, int):
-            noise_size = size / 100 * noise
+            noise_size = count*size/100*noise
         else:
-            noise_size = max(size)/100 * noise
+            noise_size = sum(size)/100 * noise
         for i in range(int(noise_size)):
             params = {
                 'a': 0 - scale,
@@ -122,6 +126,7 @@ class TrainingSamples:
         if shuffle:
             random.shuffle(self.__samples)
         self.__samples = np.array(self.__samples)
+        self.__logger.info(f"Sample size: {len(self.__samples)}")
         return self.current_state()
 
     def display_sample(self):
