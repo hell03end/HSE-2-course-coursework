@@ -35,12 +35,14 @@ def enable_logging(name=None, level="info", full_info=True,
 
 
 # @TODO: separate plotting and logging methods
+# @TODO: use `fig, ax = plt.subplots(1, 2)`
 class Plotter:
     def __init__(self, nn, logging_level="debug"):
         self._nn = nn
         self._logger = enable_logging(f"{self.__class__}", logging_level)
 
-    def display_nodes(self, plot=False, show=False, log=False) -> None:
+    def display_nodes(self, plot=False, show=False, log=False,
+                      annotate=True) -> None:
         state = self._nn.current_state(deep=False)
         if not state['nodes']:
             self._logger.warning("No nodes")
@@ -56,14 +58,19 @@ class Plotter:
 
                 mark.append(nodes[node_id].subclass_id)
             plt.scatter(x, y, c=mark, s=100)
-            plt.title("Topology")
+            try:
+                plt.title(f"{len(state['classes'])} classes, "
+                          f"{len(state['nodes'])} nodes")
+            except KeyError:
+                plt.title("Topology")
 
-            for node_id in nodes:
-                features = nodes[node_id].features
-                plt.annotate(node_id, [features[0]+scale_x,
-                                       features[1]+2*scale_y])
-                plt.annotate(f"{float(nodes[node_id].density):1.5}",
-                             [features[0]+scale_x, features[1]-2*scale_y])
+            if annotate:
+                for node_id in nodes:
+                    features = nodes[node_id].features
+                    plt.annotate(node_id, [features[0]+scale_x,
+                                           features[1]+2*scale_y])
+                    plt.annotate(f"{float(nodes[node_id].density):1.5}",
+                                 [features[0]+scale_x, features[1]-2*scale_y])
         if plot and show:
             plt.show()
 
@@ -128,8 +135,9 @@ class Plotter:
         print(f"|{'—'*20}|{'—'*5}|")
 
     def display_info(self, plot=False, separate_show=False, log=False,
-                     show=True, equal=True) -> None:
-        self.display_nodes(plot=plot, show=separate_show, log=log)
+                     show=True, equal=True, annotate=False) -> None:
+        self.display_nodes(plot=plot, show=separate_show, log=log,
+                           annotate=annotate)
         if log:
             self.display_neighbors()
         self.display_edges(plot=plot, show=separate_show, log=log)
