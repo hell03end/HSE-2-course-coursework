@@ -1,0 +1,15 @@
+<html>
+    <head>
+        <meta charset="utf-8">
+        <title>ESOINN visualisation</title>
+    </head>
+    <script language="javascript">
+        function RefreshImage() {
+            document.pic0.src="visualization.png?a=" + String(Math.random()*99999999);
+            setTimeout('RefreshImage()', 50);
+        }
+    </script>
+    <body onload="RefreshImage()">
+        <img name="pic0" src="visualization.png" width="640px" height="640px"></img>
+    </body>
+</html>

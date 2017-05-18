@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import logging
 import re
+from time import time
 
 
 # @TODO: use logging to file
@@ -143,6 +144,19 @@ class Plotter:
         self.display_edges(plot=plot, show=separate_show, log=log)
         if show and not separate_show:
             self.plot(equal)
+        plt.close('all')
+
+    def save_info(self, path, log=False, equal=True, annotate=False) -> None:
+        t_0 = time()
+        self.display_nodes(plot=True, show=False, log=log, annotate=annotate)
+        if log:
+            self.display_neighbors()
+        self.display_edges(plot=True, show=False, log=log)
+        if equal:
+            plt.axis('equal')
+        plt.savefig(path, dpi=50)
+        plt.close('all')
+        print(f"LOG:\tTook {(time() - t_0)*1000:02f} ms")
 
     @staticmethod
     def plot(equal=False) -> None:

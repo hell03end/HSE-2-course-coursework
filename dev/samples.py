@@ -129,7 +129,7 @@ class TrainingSamples:
         self.__logger.info(f"Sample size: {len(self.__samples)}")
         return self.current_state()
 
-    def display_sample(self):
+    def display_sample(self, size=None):
         if not len(self.__samples):
             return
         if isinstance(self.__samples[0], Node):
@@ -138,9 +138,16 @@ class TrainingSamples:
                 x.append(sample.features[0])
                 y.append(sample.features[1])
                 subclass.append(sample.subclass_id)
-            plt.scatter(x, y, c=subclass)
+            if not size or size < 0:
+                plt.scatter(x, y, c=subclass)
+            else:
+                plt.scatter(x, y, c=subclass, s=size)
         else:
-            plt.scatter(self.__samples[:, 0], self.__samples[:, 1])
+            if not size or size < 0:
+                plt.scatter(self.__samples[:, 0], self.__samples[:, 1])
+            else:
+                plt.scatter(self.__samples[:, 0], self.__samples[:, 1], s=size)
+        plt.axis('equal')
 
     def current_state(self) -> dict:
         return {
